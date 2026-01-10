@@ -5,7 +5,6 @@
 
 import { Vector3 } from 'three'
 import { Noise } from 'noisejs'
-import { WATER_LEVEL } from '../../config/water'
 import useTerrainStore from '../../store/terrainStore'
 
 // Epsilon for numerical gradient approximation
@@ -23,7 +22,7 @@ let terrainHelpersInstance = null
  */
 const createTerrainHelpers = () => {
 	const state = useTerrainStore.getState()
-	const { seed, baseHeightScale, noiseScale, continentScale, mountainScale, maxMountainHeight, spawnRadius, spawnTransitionRadius, waterMaxDepth } = state
+	const { seed, baseHeightScale, noiseScale, continentScale, mountainScale, maxMountainHeight, spawnRadius, spawnTransitionRadius, waterMaxDepth, waterLevel } = state
 
 	// Create noise instance with seed from store
 	const noise = new Noise(seed)
@@ -109,15 +108,15 @@ const createTerrainHelpers = () => {
 		// Base noise adds rolling hills on land, mountains add peaks on high ground
 		// Continental multiplier calculated from desired max depth:
 		// maxDepth (in world units) / baseHeightScale gives normalized depth needed
-		const continentalMultiplier = (waterMaxDepth + Math.abs(WATER_LEVEL)) / baseHeightScale
+		const continentalMultiplier = (waterMaxDepth + Math.abs(waterLevel)) / baseHeightScale
 		const baseHeight = continental * continentalMultiplier
 		let height = baseHeight
 
 		// Only apply fine-grained terrain variation well above water level
 		// Use a smooth fade so terrain doesn't suddenly become flat near water
-		// Water level is -1 (scaled by baseHeightScale=4, so -0.25 in normalized space)
+		// Water level (scaled by baseHeightScale) determines normalized water threshold
 		// We want base terrain to be at least 0.2 above water before adding variation
-		const waterThreshold = -0.25 // WATER_LEVEL / baseHeightScale
+		const waterThreshold = waterLevel / baseHeightScale
 		const safetyMargin = 0.5 // Extra margin to prevent noise from creating tiny lakes
 		const minSafeHeight = waterThreshold + safetyMargin // -0.25 + 0.5 = 0.25
 
@@ -172,7 +171,7 @@ const createTerrainHelpers = () => {
 	 * Check if a position is in water (terrain below water level).
 	 */
 	const isWater = (x, z) => {
-		return getWorldHeight(x, z) < WATER_LEVEL
+		return getWorldHeight(x, z) < waterLevel
 	}
 
 	return {

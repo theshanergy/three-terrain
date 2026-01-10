@@ -1,6 +1,3 @@
-// Water level constant (does not vary by biome)
-export const WATER_LEVEL = -1
-
 // Buoyancy configuration (does not vary by biome)
 export const BUOYANCY_CONFIG = {
 	// Physics parameters

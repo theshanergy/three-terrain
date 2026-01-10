@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { BufferGeometry, BufferAttribute } from 'three'
-import { WATER_LEVEL } from '../config/water'
 import useTerrainStore from '../store/terrainStore'
 import { getTerrainHelpers } from '../utils/terrain/heightSampler'
 
@@ -15,6 +14,7 @@ import { getTerrainHelpers } from '../utils/terrain/heightSampler'
  */
 const useTerrainGeometry = (node, edgeStitchInfo) => {
 	const tileResolution = useTerrainStore((state) => state.tileResolution)
+	const waterLevel = useTerrainStore((state) => state.waterLevel)
 	
 	return useMemo(() => {
 		const terrainHelpers = getTerrainHelpers()
@@ -160,8 +160,8 @@ const useTerrainGeometry = (node, edgeStitchInfo) => {
 				worldZForUV[vertIndex] = uvWorldZ
 
 				// Calculate water depth
-				if (height < WATER_LEVEL) {
-					depths[vertIndex] = WATER_LEVEL - height
+				if (height < waterLevel) {
+					depths[vertIndex] = waterLevel - height
 					hasWater = true
 				} else {
 					depths[vertIndex] = 0
@@ -294,7 +294,7 @@ const useTerrainGeometry = (node, edgeStitchInfo) => {
 				const localZ = worldZForUV[i] - originZ - halfSize
 
 				waterPositions[posIndex] = localX
-				waterPositions[posIndex + 1] = WATER_LEVEL
+				waterPositions[posIndex + 1] = waterLevel
 				waterPositions[posIndex + 2] = localZ
 
 				// Normal pointing up (waves added in shader)

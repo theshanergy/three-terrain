@@ -2,7 +2,6 @@ import { useMemo, useRef, useEffect } from 'react'
 import { useLoader, useFrame, useThree } from '@react-three/fiber'
 import { TextureLoader, RepeatWrapping, ShaderMaterial, Color, Vector3, Matrix4, Plane, Vector4, PerspectiveCamera, WebGLRenderTarget, FrontSide } from 'three'
 
-import { WATER_LEVEL } from '../config/water'
 import useTerrainStore from '../store/terrainStore'
 import { getWaveUniforms } from '../utils/water/wavePhysics'
 
@@ -29,6 +28,7 @@ const useWaterMaterial = () => {
 	const maxVisibleDepth = useTerrainStore((state) => state.waterMaxVisibleDepth)
 	const edgeFadeDistance = useTerrainStore((state) => state.waterEdgeFadeDistance)
 	const waterColor = useTerrainStore(selectWaterColor, waterColorEqual)
+	const waterLevel = useTerrainStore((state) => state.waterLevel)
 	// Note: sunDirection, sunColor, skyColors are now updated in useFrame to avoid rerenders
 
 	// Load water normal texture
@@ -45,7 +45,7 @@ const useWaterMaterial = () => {
 		mirrorCamera: null,
 		textureMatrix: null,
 		// Scratch vectors for reflection calculation
-		mirrorWorldPosition: new Vector3(0, WATER_LEVEL, 0),
+		mirrorWorldPosition: new Vector3(0, waterLevel, 0),
 		cameraWorldPosition: new Vector3(),
 		normal: new Vector3(0, 1, 0), // Water surface normal (up)
 		view: new Vector3(),
@@ -166,7 +166,7 @@ const useWaterMaterial = () => {
 		waterMaterial.uniforms.eye.value.copy(cameraWorldPosition)
 
 		// Skip reflection if camera is very far from water (> 1000 units)
-		const distanceToWater = Math.abs(cameraWorldPosition.y - WATER_LEVEL)
+		const distanceToWater = Math.abs(cameraWorldPosition.y - waterLevel)
 		if (distanceToWater > 1000) return
 
 		// Throttle reflection rendering
@@ -187,8 +187,8 @@ const useWaterMaterial = () => {
 
 		const { renderTarget, mirrorCamera, textureMatrix, mirrorWorldPosition, normal, view, target, lookAtPosition, rotationMatrix, mirrorPlane, clipPlane, q } = refs
 
-		// Water surface is at Y = WATER_LEVEL, facing up
-		mirrorWorldPosition.set(cameraWorldPosition.x, WATER_LEVEL, cameraWorldPosition.z)
+		// Water surface is at waterLevel, facing up
+		mirrorWorldPosition.set(cameraWorldPosition.x, waterLevel, cameraWorldPosition.z)
 		normal.set(0, 1, 0)
 
 		// Check if camera is above water (only render reflection from above)
