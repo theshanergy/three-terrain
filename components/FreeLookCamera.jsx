@@ -1,7 +1,8 @@
 import { useRef, useEffect } from 'react'
-import { useThree, useFrame } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
 import { Vector3 } from 'three'
+import { getTerrainHelpers } from '../utils/terrain/heightSampler'
 
 const KEY_MAP = {
 	KeyW: 'forward',
@@ -14,8 +15,7 @@ const KEY_MAP = {
 	ShiftRight: 'sprint',
 }
 
-const FreeLookCamera = ({ speed = 250, sprintMultiplier = 2, enabled = true }) => {
-	const { camera, gl } = useThree()
+const FreeLookCamera = ({ speed = 500, sprintMultiplier = 2, enabled = true }) => {
 	const controlsRef = useRef()
 	const velocity = useRef(new Vector3())
 	const direction = useRef(new Vector3())
@@ -60,6 +60,7 @@ const FreeLookCamera = ({ speed = 250, sprintMultiplier = 2, enabled = true }) =
 	useFrame((state, delta) => {
 		if (!enabled || !controlsRef.current?.isLocked) return
 
+		const { camera } = state
 		const actualSpeed = speed * (moveState.current.sprint ? sprintMultiplier : 1)
 
 		// Get camera direction
@@ -101,6 +102,31 @@ const FreeLookCamera = ({ speed = 250, sprintMultiplier = 2, enabled = true }) =
 			velocity.current.normalize().multiplyScalar(actualSpeed * delta)
 			camera.position.add(velocity.current)
 		}
+
+		// Apply elevation bounds to prevent clipping under terrain or flying too high
+		const terrainHelpers = getTerrainHelpers()
+		if (terrainHelpers) {
+			const getTerrainHeight = terrainHelpers.getWorldHeight
+			const terrainHeight = getTerrainHeight(camera.position.x, camera.position.z)
+
+			// Keep camera at least 2 units above terrain
+			const minHeight = terrainHeight + 2.0
+			if (camera.position.y < minHeight) {
+				camera.position.y = minHeight
+			}
+
+			// Prevent flying higher than 500 units above terrain
+			const maxHeight = terrainHeight + 500
+			if (camera.position.y > maxHeight) {
+				camera.position.y = maxHeight
+			}
+		} else {
+			// Fallback: ensure camera stays above minimum absolute height if terrain not ready
+			const minAbsoluteHeight = 1.0
+			if (camera.position.y < minAbsoluteHeight) {
+				camera.position.y = minAbsoluteHeight
+			}
+		}
 	})
 
 	// Block pointer lock when clicking on Leva
@@ -109,7 +135,7 @@ const FreeLookCamera = ({ speed = 250, sprintMultiplier = 2, enabled = true }) =
 
 		const handleEvent = (event) => {
 			const levaElement = event.target.closest('[class*="leva"]')
-			
+
 			if (levaElement) {
 				console.log(`Blocking pointer lock on ${event.type} - clicked on Leva`)
 				event.preventDefault()

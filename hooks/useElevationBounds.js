@@ -16,7 +16,7 @@ import { getTerrainHelpers } from '../utils/terrain/heightSampler'
 const useElevationBounds = (positionRef, minHeightAboveTerrain, maxHeightAboveTerrain = null, targetRef = null, velocityRef = null) => {
 	const checkElevationBounds = useCallback(() => {
 		const terrainHelpers = getTerrainHelpers()
-		
+
 		// Use direct terrain height sampling if available (much faster than raycasting)
 		if (terrainHelpers) {
 			const getTerrainHeight = terrainHelpers.getWorldHeight
@@ -66,7 +66,9 @@ const useElevationBounds = (positionRef, minHeightAboveTerrain, maxHeightAboveTe
 				positionRef.current.y = minAbsoluteHeight
 			}
 		}
-	}, [minHeightAboveTerrain, maxHeightAboveTerrain, targetRef, velocityRef])	return checkElevationBounds
+	}, [minHeightAboveTerrain, maxHeightAboveTerrain, targetRef, velocityRef])
+
+	return checkElevationBounds
 }
 
 export default useElevationBounds
