@@ -167,18 +167,10 @@ const useTerrainStore = create((set, get) => ({
 		const updates = {}
 
 		// Environment
-		if (preset.sunDirection !== undefined) {
-			updates.sunDirection = normalizeDirection(preset.sunDirection)
-		}
-		if (preset.sunColor !== undefined) {
-			updates.sunColor = preset.sunColor
-		}
-		if (preset.skyColorZenith !== undefined) {
-			updates.skyColorZenith = preset.skyColorZenith
-		}
-		if (preset.skyColorHorizon !== undefined) {
-			updates.skyColorHorizon = preset.skyColorHorizon
-		}
+		if (preset.sunDirection !== undefined) updates.sunDirection = normalizeDirection(preset.sunDirection)
+		if (preset.sunColor !== undefined) updates.sunColor = preset.sunColor
+		if (preset.skyColorZenith !== undefined) updates.skyColorZenith = preset.skyColorZenith
+		if (preset.skyColorHorizon !== undefined) updates.skyColorHorizon = preset.skyColorHorizon
 
 		// Terrain
 		if (preset.seed !== undefined) updates.seed = preset.seed
@@ -200,12 +192,8 @@ const useTerrainStore = create((set, get) => ({
 		if (preset.waterEnabled !== undefined) updates.waterEnabled = preset.waterEnabled
 		if (preset.waterLevel !== undefined) updates.waterLevel = preset.waterLevel
 		if (preset.waterMaxDepth !== undefined) updates.waterMaxDepth = preset.waterMaxDepth
-		if (preset.waterShorelineDepthThreshold !== undefined) {
-			updates.waterShorelineDepthThreshold = preset.waterShorelineDepthThreshold
-		}
-		if (preset.waterShallowDepthThreshold !== undefined) {
-			updates.waterShallowDepthThreshold = preset.waterShallowDepthThreshold
-		}
+		if (preset.waterShorelineDepthThreshold !== undefined) updates.waterShorelineDepthThreshold = preset.waterShorelineDepthThreshold
+		if (preset.waterShallowDepthThreshold !== undefined) updates.waterShallowDepthThreshold = preset.waterShallowDepthThreshold
 		if (preset.waterMaxVisibleDepth !== undefined) updates.waterMaxVisibleDepth = preset.waterMaxVisibleDepth
 		if (preset.waterEdgeFadeDistance !== undefined) updates.waterEdgeFadeDistance = preset.waterEdgeFadeDistance
 		if (preset.waterColor !== undefined) updates.waterColor = preset.waterColor
