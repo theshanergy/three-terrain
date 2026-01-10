@@ -15,7 +15,7 @@ const KEY_MAP = {
 	ShiftRight: 'sprint',
 }
 
-const FreeLookCamera = ({ speed = 500, sprintMultiplier = 2, enabled = true }) => {
+const Camera = ({ speed = 500, sprintMultiplier = 2, enabled = true }) => {
 	const controlsRef = useRef()
 	const velocity = useRef(new Vector3())
 	const direction = useRef(new Vector3())
@@ -158,4 +158,4 @@ const FreeLookCamera = ({ speed = 500, sprintMultiplier = 2, enabled = true }) =
 	return <PointerLockControls ref={controlsRef} selector='#canvas canvas' />
 }
 
-export default FreeLookCamera
+export default Camera

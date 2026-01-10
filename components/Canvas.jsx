@@ -4,7 +4,7 @@ import { PerformanceMonitor } from '@react-three/drei'
 
 import useTerrainStore from '../store/terrainStore'
 import Environment from './Environment'
-import FreeLookCamera from './FreeLookCamera'
+import Camera from './Camera'
 import Loader from './Loader'
 
 // Dev-only performance monitor - completely excluded from production bundle
@@ -28,7 +28,7 @@ const ThreeCanvas = () => {
 				<PerformanceMonitor onDecline={() => setPerformanceDegraded(true)} />
 				<PerfMonitor />
 				
-				<FreeLookCamera speed={50} sprintMultiplier={2} enabled={true} />
+				<Camera speed={50} sprintMultiplier={2} enabled={true} />
 
 				<Suspense fallback={null}>
 					<Environment />
