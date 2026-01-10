@@ -35,12 +35,6 @@ const useTerrainStore = create((set, get) => ({
 	showNotification: (notificationData) => set({ notification: { ...notificationData, id: Date.now() } }),
 	hideNotification: () => set({ notification: null }),
 
-	// Camera state
-	cameraMode: 'orbit',
-	cameraAutoRotate: false,
-	setCameraMode: (mode) => set({ cameraMode: mode }),
-	setCameraAutoRotate: (autoRotate) => set({ cameraAutoRotate: autoRotate }),
-
 	// ========================================
 	// ENVIRONMENT CONFIGURATION
 	// ========================================

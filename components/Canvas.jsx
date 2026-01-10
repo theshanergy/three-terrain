@@ -21,10 +21,10 @@ const ThreeCanvas = () => {
 	}, [])
 
 	return (
-		<div id='canvas' className='absolute inset-0 overflow-hidden'>
+		<div id='canvas' className='absolute inset-0 overflow-hidden pointer-events-none'>
 			<Loader />
 
-			<Canvas shadows={{ enabled: !performanceDegraded }} dpr={performanceDegraded ? 1 : [1, 1.5]} camera={cameraConfig}>
+			<Canvas shadows={{ enabled: !performanceDegraded }} dpr={performanceDegraded ? 1 : [1, 1.5]} camera={cameraConfig} className='pointer-events-auto'>
 				<PerformanceMonitor onDecline={() => setPerformanceDegraded(true)} />
 				<PerfMonitor />
 				
