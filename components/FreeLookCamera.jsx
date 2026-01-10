@@ -103,6 +103,32 @@ const FreeLookCamera = ({ speed = 250, sprintMultiplier = 2, enabled = true }) =
 		}
 	})
 
+	// Block pointer lock when clicking on Leva
+	useEffect(() => {
+		if (!enabled) return
+
+		const handleEvent = (event) => {
+			const levaElement = event.target.closest('[class*="leva"]')
+			
+			if (levaElement) {
+				console.log(`Blocking pointer lock on ${event.type} - clicked on Leva`)
+				event.preventDefault()
+				event.stopPropagation()
+				event.stopImmediatePropagation()
+				return false
+			}
+		}
+
+		// Block both mousedown AND click events
+		document.addEventListener('mousedown', handleEvent, { capture: true })
+		document.addEventListener('click', handleEvent, { capture: true })
+
+		return () => {
+			document.removeEventListener('mousedown', handleEvent, { capture: true })
+			document.removeEventListener('click', handleEvent, { capture: true })
+		}
+	}, [enabled])
+
 	// Show instructions when controls are locked
 	useEffect(() => {
 		if (!enabled) return
@@ -129,7 +155,7 @@ const FreeLookCamera = ({ speed = 250, sprintMultiplier = 2, enabled = true }) =
 
 	if (!enabled) return null
 
-	return <PointerLockControls ref={controlsRef} args={[camera, gl.domElement]} />
+	return <PointerLockControls ref={controlsRef} />
 }
 
 export default FreeLookCamera
