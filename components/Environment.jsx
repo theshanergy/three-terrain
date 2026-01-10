@@ -2,7 +2,7 @@ import { memo } from 'react'
 
 import Sun from './Sun'
 import Sky from './Sky'
-import Terrain from './terrain/Terrain'
+import Terrain from './Terrain'
 
 // Environment component
 const SceneEnvironment = memo(() => {

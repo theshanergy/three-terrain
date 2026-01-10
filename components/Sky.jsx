@@ -3,9 +3,9 @@ import { useFrame } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
 import { BackSide, Vector3, Color } from 'three'
 
-import useTerrainStore from '../../../store/terrainStore'
-import skyVertexShader from '../../../shaders/sky.vert.glsl'
-import skyFragmentShader from '../../../shaders/sky.frag.glsl'
+import useTerrainStore from '../store/terrainStore'
+import skyVertexShader from '../shaders/sky.vert.glsl'
+import skyFragmentShader from '../shaders/sky.frag.glsl'
 
 // Custom Atmospheric Sky component with procedural clouds
 // Uses shared atmosphere config for consistency with water shader

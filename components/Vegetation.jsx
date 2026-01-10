@@ -1,10 +1,10 @@
 import { useMemo, useEffect, memo } from 'react'
 import { InstancedMesh, Matrix4 } from 'three'
 
-import useTerrainStore from '../../../../store/terrainStore'
-import useVegetation from '../../../../hooks/useVegetation'
-import { generateVegetationForType } from '../../../../utils/terrain/vegetationGeneration'
-import { getTerrainHelpers } from '../../../../utils/terrain/heightSampler'
+import useTerrainStore from '../store/terrainStore'
+import useVegetation from '../hooks/useVegetation'
+import { generateVegetationForType } from '../utils/terrain/vegetationGeneration'
+import { getTerrainHelpers } from '../utils/terrain/heightSampler'
 
 /**
  * Custom comparison for Vegetation props.

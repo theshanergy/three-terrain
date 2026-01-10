@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useRef, memo } from 'react'
 
-import useTerrainStore from '../../../../store/terrainStore'
-import useTerrainGeometry from '../../../../hooks/useTerrainGeometry'
+import useTerrainStore from '../store/terrainStore'
+import useTerrainGeometry from '../hooks/useTerrainGeometry'
 import Vegetation from './Vegetation'
 
 // Get default edge stitch info (will be computed based on tileResolution from store)

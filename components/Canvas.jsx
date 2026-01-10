@@ -2,13 +2,13 @@ import { Suspense, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 
-import useTerrainStore from '../../store/terrainStore'
-import Environment from './environment/Environment'
+import useTerrainStore from '../store/terrainStore'
+import Environment from './Environment'
 import FreeLookCamera from './FreeLookCamera'
-import Loader from '../ui/Loader'
+import Loader from './Loader'
 
 // Dev-only performance monitor - completely excluded from production bundle
-const PerfMonitor = import.meta.env.DEV ? (await import('./managers/PerformanceMonitor')).default : () => null
+const PerfMonitor = import.meta.env.DEV ? (await import('./PerformanceMonitor')).default : () => null
 
 // Canvas component
 const ThreeCanvas = () => {

@@ -1,6 +1,6 @@
 import React from 'react'
-import useTerrainStore from '../../store/terrainStore'
-import useLoadingManager from '../../hooks/useLoadingManager'
+import useTerrainStore from '../store/terrainStore'
+import useLoadingManager from '../hooks/useLoadingManager'
 
 export default function Loader() {
 	const sceneLoaded = useTerrainStore((state) => state.sceneLoaded)

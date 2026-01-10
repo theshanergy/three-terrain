@@ -2,7 +2,7 @@ import { useRef, useMemo } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Color } from 'three'
 
-import useTerrainStore from '../../../store/terrainStore'
+import useTerrainStore from '../store/terrainStore'
 
 // Sun directional light that follows camera target
 const Sun = () => {

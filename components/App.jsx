@@ -1,8 +1,8 @@
 import { Leva } from 'leva'
 
-import Canvas from './scene/Canvas'
+import Canvas from './Canvas'
 import TerrainControls from './TerrainControls'
-import Notification from './ui/Notification'
+import Notification from './Notification'
 
 export default function App() {
 	return (

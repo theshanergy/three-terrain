@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 
-import { resetTerrainHelpers } from '../../../../utils/terrain/heightSampler'
-import useTerrainQuadtree from '../../../../hooks/useTerrainQuadtree'
-import useTerrainMaterial from '../../../../hooks/useTerrainMaterial'
-import useWaterMaterial from '../../../../hooks/useWaterMaterial'
+import { resetTerrainHelpers } from '../utils/terrain/heightSampler'
+import useTerrainQuadtree from '../hooks/useTerrainQuadtree'
+import useTerrainMaterial from '../hooks/useTerrainMaterial'
+import useWaterMaterial from '../hooks/useWaterMaterial'
 import TerrainTile from './TerrainTile'
 
 // Main terrain component

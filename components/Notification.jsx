@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import useTerrainStore from '../../store/terrainStore'
+import useTerrainStore from '../store/terrainStore'
 
 // Simple check icon component
 const CheckIcon = ({ className }) => (
