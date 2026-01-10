@@ -149,10 +149,10 @@ const buildControls = (config, initialState) => {
 }
 
 /**
- * TerrainControls - Leva UI panel for runtime terrain configuration
+ * GUI - Leva UI panel for runtime terrain configuration
  * Exposes biome presets and all terrain generation parameters for real-time tweaking
  */
-const TerrainControls = () => {
+const GUI = () => {
 	const initialState = useTerrainStore.getState()
 
 	// Biome presets
@@ -178,4 +178,4 @@ const TerrainControls = () => {
 	return null
 }
 
-export default TerrainControls
+export default GUI

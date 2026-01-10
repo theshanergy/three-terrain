@@ -1,7 +1,7 @@
 import { Leva } from 'leva'
 
 import Canvas from './Canvas'
-import TerrainControls from './TerrainControls'
+import GUI from './GUI'
 import Notification from './Notification'
 
 export default function App() {
@@ -10,7 +10,7 @@ export default function App() {
 			<Canvas />
 
 			{/* Terrain configuration controls */}
-			<TerrainControls />
+			<GUI />
 
 		{/* Leva controls panel styling */}
 		<Leva
