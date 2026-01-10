@@ -14,7 +14,7 @@ const showPerfMonitor = true
 const PerformanceMonitor = () => {
 	if (!showPerfMonitor) return null
 
-	return <Perf position='top-right' minimal={false} showGraph={false} matrixUpdate={false} style={{ right: '320px' }} />
+	return <Perf position='top-right' minimal={false} showGraph={false} matrixUpdate={false} style={{ right: '360px' }} />
 }
 
 export default PerformanceMonitor
