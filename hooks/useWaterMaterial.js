@@ -3,8 +3,12 @@ import { useLoader, useFrame, useThree } from '@react-three/fiber'
 import { TextureLoader, RepeatWrapping, ShaderMaterial, Color, Vector3, Matrix4, Plane, Vector4, PerspectiveCamera, WebGLRenderTarget, FrontSide } from 'three'
 
 import { WATER_LEVEL } from '../config/water'
-import { useBiomeWater, useBiomeEnvironment } from './useBiome'
+import useTerrainStore from '../store/terrainStore'
 import { getWaveUniforms } from '../utils/water/wavePhysics'
+
+// Deep equality check for waterColor array
+const selectWaterColor = (state) => state.waterColor
+const waterColorEqual = (a, b) => a && b && a[0] === b[0] && a[1] === b[1] && a[2] === b[2]
 
 import waterVertexShader from '../shaders/water.vert.glsl'
 import waterFragmentShader from '../shaders/water.frag.glsl'
@@ -18,9 +22,14 @@ import waterFragmentShader from '../shaders/water.frag.glsl'
 const useWaterMaterial = () => {
 	const { gl, scene, camera } = useThree()
 
-	// Get biome-specific configs
-	const waterConfig = useBiomeWater()
-	const envConfig = useBiomeEnvironment()
+	// Get water config from store (only values that require material recreation)
+	// Use deep equality comparison for waterColor array to prevent unnecessary re-renders
+	const shorelineDepthThreshold = useTerrainStore((state) => state.waterShorelineDepthThreshold)
+	const shallowDepthThreshold = useTerrainStore((state) => state.waterShallowDepthThreshold)
+	const maxVisibleDepth = useTerrainStore((state) => state.waterMaxVisibleDepth)
+	const edgeFadeDistance = useTerrainStore((state) => state.waterEdgeFadeDistance)
+	const waterColor = useTerrainStore(selectWaterColor, waterColorEqual)
+	// Note: sunDirection, sunColor, skyColors are now updated in useFrame to avoid rerenders
 
 	// Load water normal texture
 	const waterNormals = useLoader(TextureLoader, '/assets/images/ground/water_normal.jpg')
@@ -62,10 +71,10 @@ const useWaterMaterial = () => {
 		refs.textureMatrix = new Matrix4()
 	}, [])
 
-	// Create shared water material
+	// Create shared water material - only recreate when water-specific config changes
+	// Environment colors (sun, sky) are updated in useFrame to avoid unnecessary material recreation
 	const waterMaterial = useMemo(() => {
 		const refs = reflectionRefs.current
-		const { sunDirection, sunColor, skyColorZenith, skyColorHorizon } = envConfig
 		const waveUniforms = getWaveUniforms()
 
 		return new ShaderMaterial({
@@ -80,14 +89,14 @@ const useWaterMaterial = () => {
 				time: { value: 0 },
 				size: { value: 10.0 },
 				distortionScale: { value: 8.0 },
-				sunColor: { value: sunColor.clone() },
-				sunDirection: { value: sunDirection.clone() },
+				sunColor: { value: new Color() },
+				sunDirection: { value: new Vector3() },
 				eye: { value: new Vector3() },
-				waterColor: { value: new Color(waterConfig.waterColor[0], waterConfig.waterColor[1], waterConfig.waterColor[2]) },
+				waterColor: { value: new Color(waterColor[0], waterColor[1], waterColor[2]) },
 
 				// Sky colors for reflection fallback
-				skyColor: { value: skyColorZenith.clone() },
-				skyHorizonColor: { value: skyColorHorizon.clone() },
+				skyColor: { value: new Color() },
+				skyHorizonColor: { value: new Color() },
 
 				// Wave uniforms
 				waveA: { value: waveUniforms.waveA },
@@ -97,12 +106,12 @@ const useWaterMaterial = () => {
 				offsetZ: { value: 0 },
 
 				// Depth-based wave modulation
-				shorelineDepthThreshold: { value: waterConfig.shorelineDepthThreshold },
-				shallowDepthThreshold: { value: waterConfig.shallowDepthThreshold },
+				shorelineDepthThreshold: { value: shorelineDepthThreshold },
+				shallowDepthThreshold: { value: shallowDepthThreshold },
 
 				// Depth-based visual effects
-				maxVisibleDepth: { value: waterConfig.maxVisibleDepth },
-				edgeFadeDistance: { value: waterConfig.edgeFadeDistance },
+				maxVisibleDepth: { value: maxVisibleDepth },
+				edgeFadeDistance: { value: edgeFadeDistance },
 			},
 			lights: false,
 			fog: false,
@@ -110,7 +119,7 @@ const useWaterMaterial = () => {
 			transparent: true,
 			depthWrite: false,
 		})
-	}, [waterNormals, waterConfig, envConfig])
+	}, [waterNormals, waterColor, shorelineDepthThreshold, shallowDepthThreshold, maxVisibleDepth, edgeFadeDistance])
 
 	// Store water material ref for cleanup
 	const waterMaterialRef = useRef(waterMaterial)
@@ -139,8 +148,14 @@ const useWaterMaterial = () => {
 
 		const refs = reflectionRefs.current
 
-		// Get current environment config for reflection clear color
-		const { skyColorHorizon } = envConfig
+		// Get environment values from store (doesn't trigger rerenders)
+		const { sunDirection, sunColor, skyColorZenith, skyColorHorizon } = useTerrainStore.getState()
+
+		// Update environment uniforms
+		waterMaterial.uniforms.sunDirection.value.set(sunDirection[0], sunDirection[1], sunDirection[2])
+		waterMaterial.uniforms.sunColor.value.setRGB(sunColor[0], sunColor[1], sunColor[2])
+		waterMaterial.uniforms.skyColor.value.setRGB(skyColorZenith[0], skyColorZenith[1], skyColorZenith[2])
+		waterMaterial.uniforms.skyHorizonColor.value.setRGB(skyColorHorizon[0], skyColorHorizon[1], skyColorHorizon[2])
 
 		// Update time uniform (always needed for wave animation)
 		waterMaterial.uniforms.time.value += delta
@@ -251,7 +266,7 @@ const useWaterMaterial = () => {
 		gl.state.buffers.depth.setMask(true)
 
 		// Set clear color to sky horizon so unrendered areas blend with sky reflection
-		gl.setClearColor(skyColorHorizon, 1.0)
+		gl.setClearColor(waterMaterial.uniforms.skyHorizonColor.value, 1.0)
 		gl.clear(true, true, false)
 
 		gl.render(scene, mirrorCamera)

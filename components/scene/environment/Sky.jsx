@@ -1,9 +1,9 @@
 import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
-import { BackSide, Vector3 } from 'three'
+import { BackSide, Vector3, Color } from 'three'
 
-import { useBiomeEnvironment } from '../../../hooks/useBiome'
+import useTerrainStore from '../../../store/terrainStore'
 import skyVertexShader from '../../../shaders/sky.vert.glsl'
 import skyFragmentShader from '../../../shaders/sky.frag.glsl'
 
@@ -14,19 +14,20 @@ const AtmosphericSky = () => {
 	const meshRef = useRef()
 	const materialRef = useRef()
 
-	// Get biome-specific environment config
-	const { sunDirection, sunColor, skyColorZenith, skyColorHorizon } = useBiomeEnvironment()
-
+	// Create stable uniforms object once - values updated in useFrame
 	const uniforms = useMemo(
 		() => ({
 			uTime: { value: 0 },
-			uSunDirection: { value: sunDirection.clone() },
-			uSunColor: { value: sunColor.clone() },
-			uSkyColor: { value: skyColorZenith.clone() },
-			uSkyHorizonColor: { value: skyColorHorizon.clone() },
+			uSunDirection: { value: new Vector3() },
+			uSunColor: { value: new Color() },
+			uSkyColor: { value: new Color() },
+			uSkyHorizonColor: { value: new Color() },
 		}),
-		[sunDirection, sunColor, skyColorZenith, skyColorHorizon]
+		[]
 	)
+
+	// Stable ambient light color
+	const ambientColor = useMemo(() => new Color(), [])
 
 	const geometry = useMemo(() => {
 		return [500, 8, 8]
@@ -39,17 +40,28 @@ const AtmosphericSky = () => {
 		// Update sky position to match camera position
 		mesh.position.copy(state.camera.position)
 
-		// Update time uniform for animated clouds
+		// Get current values from store (doesn't trigger rerenders)
+		const { sunDirection, sunColor, skyColorZenith, skyColorHorizon } = useTerrainStore.getState()
+
+		// Update uniforms with current values
 		if (materialRef.current) {
-			materialRef.current.uniforms.uTime.value = state.clock.elapsedTime
+			const u = materialRef.current.uniforms
+			u.uTime.value = state.clock.elapsedTime
+			u.uSunDirection.value.set(sunDirection[0], sunDirection[1], sunDirection[2])
+			u.uSunColor.value.setRGB(sunColor[0], sunColor[1], sunColor[2])
+			u.uSkyColor.value.setRGB(skyColorZenith[0], skyColorZenith[1], skyColorZenith[2])
+			u.uSkyHorizonColor.value.setRGB(skyColorHorizon[0], skyColorHorizon[1], skyColorHorizon[2])
 		}
+
+		// Update ambient light color
+		ambientColor.setRGB(skyColorZenith[0], skyColorZenith[1], skyColorZenith[2])
 	})
 
 	return (
 		<group>
 			<Environment files='assets/images/envmap/rustig_koppie_puresky_1k.hdr' environmentIntensity={0.3} />
 
-			<ambientLight intensity={2.0} color={skyColorZenith} />
+			<ambientLight ref={(light) => light && (light.color = ambientColor)} intensity={2.0} />
 
 			<mesh ref={meshRef} frustumCulled={false}>
 				<sphereGeometry args={geometry} />

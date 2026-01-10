@@ -72,10 +72,11 @@ npm run preview
 │   │   └── managers/   # Performance monitoring
 │   └── ui/             # UI components
 ├── config/             # Configuration files
-│   └── biomes/         # Biome definitions
+├── presets/            # Biome presets
+│   └── biomes/         # Biome preset definitions
 ├── hooks/              # Custom React hooks
 ├── shaders/            # GLSL shader files
-├── store/              # State management
+├── store/              # State management (Zustand)
 ├── utils/              # Utility functions
 └── api/                # API entry point
 ```
@@ -89,15 +90,16 @@ The project includes three preset biomes:
 - **Mountain**: Rocky terrain with varied elevation
 - **Winter**: Snow-covered landscape with cold atmosphere
 
-Biome configurations can be found in `config/biomes/`.
+Biome presets can be found in `presets/biomes/`. Each preset applies a complete configuration to the terrain store, including environment (sun, sky), terrain (heightmap, layers), vegetation, and water settings.
 
 ### Terrain Parameters
 
-Adjust terrain generation through the UI controls:
-- Height scale and amplitude
-- Noise frequency and octaves
-- Lacunarity and persistence
-- Vegetation density
+All terrain generation parameters are exposed through Leva UI controls and stored in the unified terrain store:
+- **Environment**: Sun direction/color, sky colors
+- **Terrain Generation**: Seed, height scale, noise parameters
+- **LOD Settings**: Split factor, hysteresis
+- **Vegetation**: Enable/disable, density multiplier
+- **Water**: Enable/disable, level, appearance
 - Water level
 
 ## Usage as a Library

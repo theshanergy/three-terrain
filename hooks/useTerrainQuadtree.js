@@ -1,8 +1,9 @@
 import { useState, useRef, startTransition } from 'react'
 import { useFrame } from '@react-three/fiber'
 
-import { QUADTREE_ROOT_SIZE, QUADTREE_MIN_SIZE, LOD_SPLIT_FACTOR, LOD_HYSTERESIS, MAX_QUADTREE_DEPTH } from '../config/lod'
+import { MAX_QUADTREE_DEPTH } from '../config/lod'
 import { QuadtreeNode, getEdgeStitchInfo } from '../utils/terrain/quadtree'
+import useTerrainStore from '../store/terrainStore'
 
 /**
  * Custom hook to manage quadtree LOD system
@@ -20,6 +21,9 @@ const useTerrainQuadtree = () => {
 
 	// Update quadtree based on camera position each frame
 	useFrame(({ camera, clock }) => {
+		// Get LOD config from store each frame (inexpensive)
+		const { rootSize, minTileSize, lodSplitFactor, lodHysteresis, tileResolution } = useTerrainStore.getState()
+		
 		const centerPosition = camera.position
 		const currentTime = clock.getElapsedTime()
 
@@ -30,7 +34,7 @@ const useTerrainQuadtree = () => {
 		}
 
 		// Only update if camera moved more than threshold since last update
-		const updateThreshold = QUADTREE_MIN_SIZE
+		const updateThreshold = minTileSize
 		const isFirstUpdate = lastUpdatePosition.current.x === null
 
 		// Calculate movement distance only if we have a previous position
@@ -53,8 +57,8 @@ const useTerrainQuadtree = () => {
 		const viewRange = 2 // Number of root tiles in each direction from center
 
 		// Calculate the root tile the camera is currently in
-		const centerRootX = Math.floor(centerPosition.x / QUADTREE_ROOT_SIZE)
-		const centerRootZ = Math.floor(centerPosition.z / QUADTREE_ROOT_SIZE)
+		const centerRootX = Math.floor(centerPosition.x / rootSize)
+		const centerRootZ = Math.floor(centerPosition.z / rootSize)
 
 		// Generate roots in a grid around the camera's current root
 		for (let rx = -viewRange; rx <= viewRange; rx++) {
@@ -64,21 +68,21 @@ const useTerrainQuadtree = () => {
 				const rootTileZ = centerRootZ + rz
 
 				// Convert tile coordinates to world center position
-				const rootX = rootTileX * QUADTREE_ROOT_SIZE + QUADTREE_ROOT_SIZE / 2
-				const rootZ = rootTileZ * QUADTREE_ROOT_SIZE + QUADTREE_ROOT_SIZE / 2
+				const rootX = rootTileX * rootSize + rootSize / 2
+				const rootZ = rootTileZ * rootSize + rootSize / 2
 
 				// Check if this root is within reasonable view distance
 				const distX = centerPosition.x - rootX
 				const distZ = centerPosition.z - rootZ
 				const distSq = distX * distX + distZ * distZ
 
-				if (distSq < QUADTREE_ROOT_SIZE * QUADTREE_ROOT_SIZE * 4) {
+				if (distSq < rootSize * rootSize * 4) {
 					const rootKey = `${rootX},${rootZ}`
 					rootsNeeded.add(rootKey)
 
 					// Create root if it doesn't exist
 					if (!quadtreeRoots.current.has(rootKey)) {
-						quadtreeRoots.current.set(rootKey, new QuadtreeNode(rootX, rootZ, QUADTREE_ROOT_SIZE, MAX_QUADTREE_DEPTH))
+						quadtreeRoots.current.set(rootKey, new QuadtreeNode(rootX, rootZ, rootSize, MAX_QUADTREE_DEPTH))
 					}
 				}
 			}
@@ -93,7 +97,7 @@ const useTerrainQuadtree = () => {
 
 		// Update all active quadtrees
 		for (const [, root] of quadtreeRoots.current) {
-			root.update(centerPosition.x, centerPosition.z, LOD_SPLIT_FACTOR, LOD_HYSTERESIS, QUADTREE_MIN_SIZE)
+			root.update(centerPosition.x, centerPosition.z, lodSplitFactor, lodHysteresis, minTileSize)
 		}
 
 		// Collect all leaf nodes from all roots
@@ -107,7 +111,7 @@ const useTerrainQuadtree = () => {
 		// Calculate edge stitching info for each leaf
 		const tilesWithStitching = allLeaves.map((node) => ({
 			node,
-			edgeStitchInfo: getEdgeStitchInfo(node, allNodes, QUADTREE_MIN_SIZE),
+			edgeStitchInfo: getEdgeStitchInfo(node, allNodes, minTileSize, tileResolution),
 		}))
 
 		// Mark this update time

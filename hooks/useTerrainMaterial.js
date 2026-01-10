@@ -1,7 +1,12 @@
 import { useMemo, useEffect } from 'react'
 import { useLoader } from '@react-three/fiber'
 import { RepeatWrapping, MeshStandardMaterial, TextureLoader } from 'three'
-import { useBiomeTerrain } from './useBiome'
+import useTerrainStore from '../store/terrainStore'
+
+// Deep equality check for layers array - compares by JSON stringification
+// This ensures we only re-render when layer configuration actually changes
+const selectLayers = (state) => state.layers
+const layersEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
 // Uniform field definitions - maps layer properties to shader uniform names and values
 const UNIFORM_FIELDS = [
@@ -244,9 +249,9 @@ const generateNormalBlendingCode = (layers) => {
  * @returns {THREE.MeshStandardMaterial} Shared terrain material instance
  */
 const useTerrainMaterial = () => {
-	// Get biome-specific terrain config
-	const terrainConfig = useBiomeTerrain()
-	const TERRAIN_LAYERS = terrainConfig.layers
+	// Get terrain layers from store
+	// Use deep equality comparison to prevent re-renders when array contents are identical
+	const TERRAIN_LAYERS = useTerrainStore(selectLayers, layersEqual)
 
 	// Build texture paths array from layer config
 	const texturePaths = useMemo(() => TERRAIN_LAYERS.flatMap((layer) => [layer.textures.albedo, layer.textures.normal]), [TERRAIN_LAYERS])

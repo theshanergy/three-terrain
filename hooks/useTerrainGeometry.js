@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { BufferGeometry, BufferAttribute } from 'three'
-import { TILE_RESOLUTION } from '../config/lod'
 import { WATER_LEVEL } from '../config/water'
+import useTerrainStore from '../store/terrainStore'
+import { getTerrainHelpers } from '../utils/terrain/heightSampler'
 
 /**
  * Create geometry for a quadtree terrain tile.
@@ -9,15 +10,18 @@ import { WATER_LEVEL } from '../config/water'
  * Also generates water geometry if terrain is below water level.
  *
  * @param {Object} node - Quadtree node with size, centerX, centerZ
- * @param {Object} terrainHelpers - Object with getRawHeight, getNormal, and baseHeightScale
  * @param {Object} edgeStitchInfo - Edge stitching configuration per direction
  * @returns {Object} Object containing { terrainGeometry, waterGeometry } (waterGeometry may be null)
  */
-const useTerrainGeometry = (node, terrainHelpers, edgeStitchInfo) => {
+const useTerrainGeometry = (node, edgeStitchInfo) => {
+	const tileResolution = useTerrainStore((state) => state.tileResolution)
+	
 	return useMemo(() => {
+		const terrainHelpers = getTerrainHelpers()
+		
 		const { baseHeightScale } = terrainHelpers
 		const { size, centerX, centerZ } = node
-		const resolution = TILE_RESOLUTION
+		const resolution = tileResolution
 		const segments = resolution
 		const sampleCount = segments + 1
 		const totalSamples = sampleCount * sampleCount
@@ -339,7 +343,7 @@ const useTerrainGeometry = (node, terrainHelpers, edgeStitchInfo) => {
 		}
 
 		return { terrainGeometry: terrainGeom, waterGeometry: waterGeom }
-	}, [node, terrainHelpers, edgeStitchInfo])
+	}, [node, edgeStitchInfo, tileResolution])
 }
 
 export default useTerrainGeometry

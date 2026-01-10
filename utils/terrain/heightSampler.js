@@ -4,23 +4,29 @@
 // Water is simply wherever terrain height < water level (no special casing)
 
 import { Vector3 } from 'three'
+import { Noise } from 'noisejs'
 import { WATER_LEVEL } from '../../config/water'
+import useTerrainStore from '../../store/terrainStore'
 
 // Epsilon for numerical gradient approximation
 const GRADIENT_EPSILON = 0.01
 
+// Singleton instance
+let terrainHelpersInstance = null
+
 /**
  * Creates terrain helper functions for height and normal sampling.
  * Uses a unified noise approach - one coherent function produces all terrain features.
+ * This is now a singleton - only one instance exists and is reused.
  *
- * @param {Object} noise - Noise instance from noisejs
- * @param {Object} terrainConfig - Terrain configuration object from biome
- * @param {Object} waterConfig - Water configuration object from biome (optional)
  * @returns {Object} Object with getNormalizedHeight, getWorldHeight, getNormal, and isWater functions
  */
-export const createTerrainHelpers = (noise, terrainConfig, waterConfig = { maxDepth: 50 }) => {
-	const { baseHeightScale, noiseScale, continentScale, mountainScale, maxMountainHeight, spawnRadius, spawnTransitionRadius } = terrainConfig
-	const WATER_BODY_CONFIG = waterConfig
+const createTerrainHelpers = () => {
+	const state = useTerrainStore.getState()
+	const { seed, baseHeightScale, noiseScale, continentScale, mountainScale, maxMountainHeight, spawnRadius, spawnTransitionRadius, waterMaxDepth } = state
+
+	// Create noise instance with seed from store
+	const noise = new Noise(seed)
 
 	const spawnRadiusSq = spawnRadius * spawnRadius
 	const transitionEndSq = spawnTransitionRadius * spawnTransitionRadius
@@ -103,7 +109,7 @@ export const createTerrainHelpers = (noise, terrainConfig, waterConfig = { maxDe
 		// Base noise adds rolling hills on land, mountains add peaks on high ground
 		// Continental multiplier calculated from desired max depth:
 		// maxDepth (in world units) / baseHeightScale gives normalized depth needed
-		const continentalMultiplier = (WATER_BODY_CONFIG.maxDepth + Math.abs(WATER_LEVEL)) / baseHeightScale
+		const continentalMultiplier = (waterMaxDepth + Math.abs(WATER_LEVEL)) / baseHeightScale
 		const baseHeight = continental * continentalMultiplier
 		let height = baseHeight
 
@@ -176,4 +182,25 @@ export const createTerrainHelpers = (noise, terrainConfig, waterConfig = { maxDe
 		isWater,
 		baseHeightScale,
 	}
+}
+
+/**
+ * Get the singleton terrain helpers instance.
+ * Creates it on first call, then returns the cached instance.
+ *
+ * @returns {Object} Terrain helpers with getNormalizedHeight, getWorldHeight, getNormal, isWater functions
+ */
+export const getTerrainHelpers = () => {
+	if (!terrainHelpersInstance) {
+		terrainHelpersInstance = createTerrainHelpers()
+	}
+	return terrainHelpersInstance
+}
+
+/**
+ * Reset the singleton instance (useful when terrain config changes).
+ * Should be called from Terrain component when it remounts or config changes.
+ */
+export const resetTerrainHelpers = () => {
+	terrainHelpersInstance = null
 }

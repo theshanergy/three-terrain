@@ -1,16 +1,16 @@
 import { useMemo, useEffect, useRef, memo } from 'react'
 
-import { TILE_RESOLUTION } from '../../../../config/lod'
+import useTerrainStore from '../../../../store/terrainStore'
 import useTerrainGeometry from '../../../../hooks/useTerrainGeometry'
 import Vegetation from './Vegetation'
 
-// Default edge stitch info (no stitching needed)
-const DEFAULT_EDGE_STITCH_INFO = {
-	north: { needsStitch: false, neighborStep: 32 / TILE_RESOLUTION },
-	south: { needsStitch: false, neighborStep: 32 / TILE_RESOLUTION },
-	east: { needsStitch: false, neighborStep: 32 / TILE_RESOLUTION },
-	west: { needsStitch: false, neighborStep: 32 / TILE_RESOLUTION },
-}
+// Get default edge stitch info (will be computed based on tileResolution from store)
+const getDefaultEdgeStitchInfo = (tileResolution) => ({
+	north: { needsStitch: false, neighborStep: 32 / tileResolution },
+	south: { needsStitch: false, neighborStep: 32 / tileResolution },
+	east: { needsStitch: false, neighborStep: 32 / tileResolution },
+	west: { needsStitch: false, neighborStep: 32 / tileResolution },
+})
 
 /**
  * Custom comparison for QuadtreeTerrainTile props.
@@ -22,7 +22,9 @@ const arePropsEqual = (prevProps, nextProps) => {
 		prevProps.node.key !== nextProps.node.key ||
 		prevProps.node.size !== nextProps.node.size ||
 		prevProps.node.centerX !== nextProps.node.centerX ||
-		prevProps.node.centerZ !== nextProps.node.centerZ
+		prevProps.node.centerZ !== nextProps.node.centerZ ||
+		prevProps.terrainMaterial !== nextProps.terrainMaterial ||
+		prevProps.waterMaterial !== nextProps.waterMaterial
 	) {
 		return false
 	}
@@ -46,16 +48,6 @@ const arePropsEqual = (prevProps, nextProps) => {
 		}
 	}
 
-	// Reference comparisons for objects that should be stable
-	if (
-		prevProps.terrainHelpers !== nextProps.terrainHelpers ||
-		prevProps.terrainMaterial !== nextProps.terrainMaterial ||
-		prevProps.waterMaterial !== nextProps.waterMaterial ||
-		prevProps.vegetationModels !== nextProps.vegetationModels
-	) {
-		return false
-	}
-
 	return true
 }
 
@@ -64,25 +56,26 @@ const arePropsEqual = (prevProps, nextProps) => {
  *
  * @param {Object} props
  * @param {Object} props.node - Quadtree node with centerX, centerZ, size, key
- * @param {Object} props.terrainHelpers - Height/normal sampling functions
  * @param {Object} props.edgeStitchInfo - Edge stitching configuration
- * @param {THREE.Material} props.terrainMaterial - Shared terrain material instance
- * @param {THREE.Material} props.waterMaterial - Shared water material instance
- * @param {Object} props.vegetationModels - Vegetation LOD models from useVegetation
+ * @param {THREE.Material} props.terrainMaterial - Shared terrain material
+ * @param {THREE.Material} props.waterMaterial - Shared water material
  */
-const TerrainTile = memo(({ node, terrainHelpers, edgeStitchInfo, terrainMaterial, waterMaterial, vegetationModels }) => {
+const TerrainTile = memo(({ node, edgeStitchInfo, terrainMaterial, waterMaterial }) => {
 	const { centerX, centerZ } = node
 	const position = useMemo(() => [centerX, 0, centerZ], [centerX, centerZ])
+
+	// Get tile resolution from store
+	const tileResolution = useTerrainStore((state) => state.tileResolution)
 
 	// Track geometry refs for proper disposal
 	const terrainGeometryRef = useRef(null)
 	const waterGeometryRef = useRef(null)
 
 	// Use effective edge stitch info for both terrain and water
-	const effectiveEdgeStitchInfo = edgeStitchInfo || DEFAULT_EDGE_STITCH_INFO
+	const effectiveEdgeStitchInfo = edgeStitchInfo || getDefaultEdgeStitchInfo(tileResolution)
 
-	// Create geometries
-	const { terrainGeometry, waterGeometry } = useTerrainGeometry(node, terrainHelpers, effectiveEdgeStitchInfo)
+	// Create geometries (materials are passed as props and shared across all tiles)
+	const { terrainGeometry, waterGeometry } = useTerrainGeometry(node, effectiveEdgeStitchInfo)
 
 	// Helper to manage geometry lifecycle (disposal on change and unmount)
 	const useGeometryDisposal = (geometryRef, geometry) => {
@@ -112,7 +105,7 @@ const TerrainTile = memo(({ node, terrainHelpers, edgeStitchInfo, terrainMateria
 				{terrainMaterial && <mesh geometry={terrainGeometry} material={terrainMaterial} receiveShadow />}
 				{waterMaterial && waterGeometry && <mesh geometry={waterGeometry} material={waterMaterial} />}
 			</group>
-			<Vegetation node={node} terrainHelpers={terrainHelpers} vegetationModels={vegetationModels} />
+			<Vegetation node={node} />
 		</>
 	)
 }, arePropsEqual)

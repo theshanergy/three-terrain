@@ -2,7 +2,9 @@ import { useMemo, useEffect, memo } from 'react'
 import { InstancedMesh, Matrix4 } from 'three'
 
 import useTerrainStore from '../../../../store/terrainStore'
+import useVegetation from '../../../../hooks/useVegetation'
 import { generateVegetationForType } from '../../../../utils/terrain/vegetationGeneration'
+import { getTerrainHelpers } from '../../../../utils/terrain/heightSampler'
 
 /**
  * Custom comparison for Vegetation props.
@@ -19,11 +21,6 @@ const arePropsEqual = (prevProps, nextProps) => {
 		return false
 	}
 
-	// Reference comparisons for objects that should be stable
-	if (prevProps.terrainHelpers !== nextProps.terrainHelpers || prevProps.vegetationModels !== nextProps.vegetationModels) {
-		return false
-	}
-
 	return true
 }
 
@@ -32,18 +29,18 @@ const arePropsEqual = (prevProps, nextProps) => {
  *
  * @param {Object} props
  * @param {Object} props.node - Quadtree node with centerX, centerZ, size, key
- * @param {Object} props.terrainHelpers - Height/normal sampling functions
- * @param {Array} props.vegetationModels - Array of vegetation type models from useVegetation
  */
-const Vegetation = memo(({ node, terrainHelpers, vegetationModels }) => {
-	// Check if vegetation should be disabled
+const Vegetation = memo(({ node }) => {
+	// Get data from store and hooks
 	const performanceDegraded = useTerrainStore((state) => state.performanceDegraded)
+	const vegetationModels = useVegetation()
 	const showVegetation = !performanceDegraded
 
 	// Generate vegetation instances for this tile
 	const vegetationInstances = useMemo(() => {
-		if (!vegetationModels || !showVegetation || !terrainHelpers) return null
+		if (!vegetationModels || !showVegetation) return null
 
+		const terrainHelpers = getTerrainHelpers()
 		const allInstances = []
 
 		// Reusable scratch object for transform composition
@@ -106,7 +103,7 @@ const Vegetation = memo(({ node, terrainHelpers, vegetationModels }) => {
 		})
 
 		return allInstances.length > 0 ? allInstances : null
-	}, [node.key, node.size, node.lod, vegetationModels, terrainHelpers, showVegetation])
+	}, [node.key, node.size, node.lod, vegetationModels, showVegetation])
 
 	// Cleanup vegetation instances
 	useEffect(() => {

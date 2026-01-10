@@ -2,7 +2,7 @@
 // Quadtree data structure for terrain level-of-detail management.
 // Handles spatial subdivision, view-dependent refinement, and neighbor queries.
 
-import { QUADTREE_ROOT_SIZE, QUADTREE_MIN_SIZE, TILE_RESOLUTION, MAX_QUADTREE_DEPTH } from '../../config/lod'
+import { QUADTREE_ROOT_SIZE, QUADTREE_MIN_SIZE, MAX_QUADTREE_DEPTH } from '../../config/lod'
 
 /**
 	 * Represents a node in the terrain quadtree.
@@ -148,14 +148,15 @@ export class QuadtreeNode {
  * @param {QuadtreeNode} node - The node to check
  * @param {Map} allNodes - Map of all nodes by key
  * @param {number} minSize - Minimum tile size
+ * @param {number} tileResolution - Resolution of each tile
  * @returns {Object} Edge stitching info for each direction
  */
-export const getEdgeStitchInfo = (node, allNodes, minSize) => {
+export const getEdgeStitchInfo = (node, allNodes, minSize, tileResolution) => {
 	const edges = {
-		north: { needsStitch: false, neighborStep: node.size / TILE_RESOLUTION },
-		south: { needsStitch: false, neighborStep: node.size / TILE_RESOLUTION },
-		east: { needsStitch: false, neighborStep: node.size / TILE_RESOLUTION },
-		west: { needsStitch: false, neighborStep: node.size / TILE_RESOLUTION },
+		north: { needsStitch: false, neighborStep: node.size / tileResolution },
+		south: { needsStitch: false, neighborStep: node.size / tileResolution },
+		east: { needsStitch: false, neighborStep: node.size / tileResolution },
+		west: { needsStitch: false, neighborStep: node.size / tileResolution },
 	}
 
 	const halfSize = node.size / 2
@@ -186,7 +187,7 @@ export const getEdgeStitchInfo = (node, allNodes, minSize) => {
 			if (neighbor && !neighbor.children) {
 				// Found a coarser leaf neighbor - we need to stitch
 				edges[edge].needsStitch = true
-				edges[edge].neighborStep = checkSize / TILE_RESOLUTION
+				edges[edge].neighborStep = checkSize / tileResolution
 				break
 			}
 

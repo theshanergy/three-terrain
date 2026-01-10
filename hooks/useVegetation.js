@@ -2,7 +2,12 @@ import { useMemo } from 'react'
 import { Matrix4 } from 'three'
 import { useGLTF } from '@react-three/drei'
 
-import { useBiomeVegetation } from './useBiome'
+import useTerrainStore from '../store/terrainStore'
+
+// Deep equality check for vegetation array - compares by JSON stringification
+// This ensures we only re-render when vegetation configuration actually changes
+const selectVegetation = (state) => state.vegetation
+const vegetationEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
 /**
  * useVegetation Hook
@@ -19,8 +24,9 @@ import { useBiomeVegetation } from './useBiome'
  * @returns {Array|null} Array of vegetation type models, or null if not loaded
  */
 const useVegetation = () => {
-	// Get biome-specific vegetation config
-	const VEGETATION_TYPES = useBiomeVegetation()
+	// Get vegetation config from store
+	// Use deep equality comparison to prevent re-renders when array contents are identical
+	const VEGETATION_TYPES = useTerrainStore(selectVegetation, vegetationEqual)
 
 	// Extract unique GLTF models (filter out meshFactory-based vegetation)
 	const UNIQUE_MODELS = useMemo(() => {

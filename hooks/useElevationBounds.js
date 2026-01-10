@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import useTerrainStore from '../store/terrainStore'
+import { getTerrainHelpers } from '../utils/terrain/heightSampler'
 
 /**
  * Custom hook for elevation constraints using direct terrain height sampling.
@@ -14,11 +14,12 @@ import useTerrainStore from '../store/terrainStore'
  * @returns {Function} Function to check and enforce elevation bounds
  */
 const useElevationBounds = (positionRef, minHeightAboveTerrain, maxHeightAboveTerrain = null, targetRef = null, velocityRef = null) => {
-	const getTerrainHeight = useTerrainStore((state) => state.getTerrainHeight)
-
 	const checkElevationBounds = useCallback(() => {
+		const terrainHelpers = getTerrainHelpers()
+		
 		// Use direct terrain height sampling if available (much faster than raycasting)
-		if (getTerrainHeight) {
+		if (terrainHelpers) {
+			const getTerrainHeight = terrainHelpers.getWorldHeight
 			const terrainHeight = getTerrainHeight(positionRef.current.x, positionRef.current.z)
 
 			// Lower bound (ground avoidance)
@@ -65,9 +66,7 @@ const useElevationBounds = (positionRef, minHeightAboveTerrain, maxHeightAboveTe
 				positionRef.current.y = minAbsoluteHeight
 			}
 		}
-	}, [getTerrainHeight, minHeightAboveTerrain, maxHeightAboveTerrain, targetRef, velocityRef])
-
-	return checkElevationBounds
+	}, [minHeightAboveTerrain, maxHeightAboveTerrain, targetRef, velocityRef])	return checkElevationBounds
 }
 
 export default useElevationBounds
