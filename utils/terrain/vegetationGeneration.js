@@ -1,11 +1,11 @@
 import { Vector3, Object3D } from 'three'
 import { createSeededRandom, hashCoords } from '../seededRandom'
-import { QUADTREE_MIN_SIZE } from '../../config/lod'
+import useTerrainStore from '../../store/terrainStore'
 
 /**
  * Vegetation Generation Utilities
  *
- * Generates vegetation at a FIXED grid resolution (QUADTREE_MIN_SIZE) across the world.
+ * Generates vegetation at a FIXED grid resolution (minTileSize) across the world.
  * This ensures vegetation positions are stable regardless of terrain LOD.
  *
  * Each minimum-size cell gets its own deterministic set of vegetation.
@@ -27,7 +27,7 @@ const _normalScratch = new Vector3()
  * @param {number} typeIndex - Vegetation type index for seeding
  * @returns {Array} Array of matrices for this cell
  */
-const generateCellVegetation = (cellX, cellZ, terrainHelpers, config, typeIndex) => {
+const generateCellVegetation = (cellX, cellZ, terrainHelpers, config, typeIndex, minTileSize) => {
 	const { getWorldHeight, getNormal } = terrainHelpers
 	const { scale, slope, height, density } = config
 
@@ -36,13 +36,13 @@ const generateCellVegetation = (cellX, cellZ, terrainHelpers, config, typeIndex)
 	let matricesCount = 0
 
 	// Cell bounds
-	const halfCell = QUADTREE_MIN_SIZE / 2
+	const halfCell = minTileSize / 2
 	const minX = cellX - halfCell
 	const minZ = cellZ - halfCell
 
 	// Deterministic seed based on cell grid position
-	const gridX = Math.floor(cellX / QUADTREE_MIN_SIZE)
-	const gridZ = Math.floor(cellZ / QUADTREE_MIN_SIZE)
+	const gridX = Math.floor(cellX / minTileSize)
+	const gridZ = Math.floor(cellZ / minTileSize)
 	const cellSeed = hashCoords(gridX, gridZ, 88888 + typeIndex * 1000)
 	const random = createSeededRandom(cellSeed)
 
@@ -53,7 +53,7 @@ const generateCellVegetation = (cellX, cellZ, terrainHelpers, config, typeIndex)
 	// Calculate expected count for this cell
 	// density = items per square kilometer (1,000,000 sq m)
 	// Each cell is 32m × 32m = 1,024 sq m
-	const cellArea = QUADTREE_MIN_SIZE * QUADTREE_MIN_SIZE
+	const cellArea = minTileSize * minTileSize
 	const expectedCount = (density || 1.0) * (cellArea / 1000000)
 
 	// Add natural variation (±20%)
@@ -77,8 +77,8 @@ const generateCellVegetation = (cellX, cellZ, terrainHelpers, config, typeIndex)
 		attempts++
 
 		// Random position within cell
-		const vegX = minX + random() * QUADTREE_MIN_SIZE
-		const vegZ = minZ + random() * QUADTREE_MIN_SIZE
+		const vegX = minX + random() * minTileSize
+		const vegZ = minZ + random() * minTileSize
 
 		// Height check
 		const vegY = getWorldHeight(vegX, vegZ)
@@ -125,6 +125,9 @@ const generateCellVegetation = (cellX, cellZ, terrainHelpers, config, typeIndex)
 export const generateVegetationForType = (node, terrainHelpers, lodLevel, vegetationTypeConfig, typeIndex) => {
 	const { centerX, centerZ, size } = node
 	const matrices = []
+	
+	// Get minTileSize from store
+	const { minTileSize } = useTerrainStore.getState()
 
 	// Calculate tile bounds
 	const halfSize = size / 2
@@ -132,17 +135,17 @@ export const generateVegetationForType = (node, terrainHelpers, lodLevel, vegeta
 	const minZ = centerZ - halfSize
 
 	// Calculate how many cells this tile contains
-	const cellsPerSide = Math.round(size / QUADTREE_MIN_SIZE)
+	const cellsPerSide = Math.round(size / minTileSize)
 
 	// Iterate over all cells in this tile
 	for (let cx = 0; cx < cellsPerSide; cx++) {
 		for (let cz = 0; cz < cellsPerSide; cz++) {
-			// Calculate cell center (aligned to QUADTREE_MIN_SIZE grid)
-			const cellX = minX + (cx + 0.5) * QUADTREE_MIN_SIZE
-			const cellZ = minZ + (cz + 0.5) * QUADTREE_MIN_SIZE
+			// Calculate cell center (aligned to minTileSize grid)
+			const cellX = minX + (cx + 0.5) * minTileSize
+			const cellZ = minZ + (cz + 0.5) * minTileSize
 
 			// Generate vegetation for this cell and add to matrices
-			const cellMatrices = generateCellVegetation(cellX, cellZ, terrainHelpers, vegetationTypeConfig, typeIndex)
+			const cellMatrices = generateCellVegetation(cellX, cellZ, terrainHelpers, vegetationTypeConfig, typeIndex, minTileSize)
 
 			// Concat arrays more efficiently than spread operator
 			for (let i = 0; i < cellMatrices.length; i++) {

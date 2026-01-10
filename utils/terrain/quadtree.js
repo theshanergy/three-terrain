@@ -2,7 +2,7 @@
 // Quadtree data structure for terrain level-of-detail management.
 // Handles spatial subdivision, view-dependent refinement, and neighbor queries.
 
-import { QUADTREE_ROOT_SIZE, QUADTREE_MIN_SIZE, MAX_QUADTREE_DEPTH } from '../../config/lod'
+import useTerrainStore from '../../store/terrainStore'
 
 /**
 	 * Represents a node in the terrain quadtree.
@@ -17,7 +17,7 @@ export class QuadtreeNode {
 	 * @param {number} size - Width/height of this node's region
 	 * @param {number} lod - Level of detail (0 = highest res/smallest tiles, MAX = lowest res/largest tiles)
 	 */
-	constructor(centerX, centerZ, size, lod = MAX_QUADTREE_DEPTH) {
+	constructor(centerX, centerZ, size, lod) {
 		this.centerX = centerX
 		this.centerZ = centerZ
 		this.size = size
@@ -174,12 +174,13 @@ export const getEdgeStitchInfo = (node, allNodes, minSize, tileResolution) => {
 	for (const { edge, x, z } of probes) {
 		// Look for nodes at coarser levels (larger sizes) that contain this point
 		let checkSize = node.size * 2
+		const { rootSize, minTileSize } = useTerrainStore.getState()
 
-		while (checkSize <= QUADTREE_ROOT_SIZE) {
+		while (checkSize <= rootSize) {
 			// Calculate which node at this size would contain the probe point
 			const nodeX = Math.floor(x / checkSize) * checkSize + checkSize / 2
 			const nodeZ = Math.floor(z / checkSize) * checkSize + checkSize / 2
-			const lod = Math.log2(checkSize / QUADTREE_MIN_SIZE) // LOD based on tile size
+			const lod = Math.log2(checkSize / minTileSize) // LOD based on tile size
 			const neighborKey = `qt_${lod}_${Math.floor(nodeX)}_${Math.floor(nodeZ)}`
 
 			// Check if this coarser node exists and is a leaf

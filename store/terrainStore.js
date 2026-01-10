@@ -81,6 +81,12 @@ const useTerrainStore = create((set, get) => ({
 	rootSize: 4096,
 	tileResolution: 16,
 
+	// Computed LOD value - maximum quadtree depth (root node LOD level)
+	// LOD 0 is highest resolution (smallest tiles)
+	get maxQuadtreeDepth() {
+		return Math.log2(this.rootSize / this.minTileSize)
+	},
+
 	// Terrain Layers
 	layers: [
 		{
@@ -159,7 +165,7 @@ const useTerrainStore = create((set, get) => ({
 		set((state) => ({
 			vegetation: typeof vegetationUpdater === 'function' ? vegetationUpdater(state.vegetation) : vegetationUpdater,
 		})),
-	
+
 	// Vegetation controls
 	vegetationEnabled: true,
 	vegetationDensity: 1.0,
@@ -177,7 +183,7 @@ const useTerrainStore = create((set, get) => ({
 	waterMaxVisibleDepth: 8.0,
 	waterEdgeFadeDistance: 0.1,
 	waterColor: [0.0, 0.12, 0.06],
-	
+
 	setWaterEnabled: (enabled) => set({ waterEnabled: enabled }),
 	setWaterLevel: (level) => set({ waterLevel: level }),
 	setWaterMaxDepth: (depth) => set({ waterMaxDepth: depth }),

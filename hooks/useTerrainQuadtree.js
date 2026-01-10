@@ -1,7 +1,6 @@
 import { useState, useRef, startTransition } from 'react'
 import { useFrame } from '@react-three/fiber'
 
-import { MAX_QUADTREE_DEPTH } from '../config/lod'
 import { QuadtreeNode, getEdgeStitchInfo } from '../utils/terrain/quadtree'
 import useTerrainStore from '../store/terrainStore'
 
@@ -22,7 +21,7 @@ const useTerrainQuadtree = () => {
 	// Update quadtree based on camera position each frame
 	useFrame(({ camera, clock }) => {
 		// Get LOD config from store each frame (inexpensive)
-		const { rootSize, minTileSize, lodSplitFactor, lodHysteresis, tileResolution } = useTerrainStore.getState()
+		const { rootSize, minTileSize, lodSplitFactor, lodHysteresis, tileResolution, maxQuadtreeDepth } = useTerrainStore.getState()
 		
 		const centerPosition = camera.position
 		const currentTime = clock.getElapsedTime()
@@ -78,12 +77,12 @@ const useTerrainQuadtree = () => {
 
 				if (distSq < rootSize * rootSize * 4) {
 					const rootKey = `${rootX},${rootZ}`
-					rootsNeeded.add(rootKey)
+				rootsNeeded.add(rootKey)
 
-					// Create root if it doesn't exist
-					if (!quadtreeRoots.current.has(rootKey)) {
-						quadtreeRoots.current.set(rootKey, new QuadtreeNode(rootX, rootZ, rootSize, MAX_QUADTREE_DEPTH))
-					}
+				// Create root if it doesn't exist
+				if (!quadtreeRoots.current.has(rootKey)) {
+					quadtreeRoots.current.set(rootKey, new QuadtreeNode(rootX, rootZ, rootSize, maxQuadtreeDepth))
+				}
 				}
 			}
 		}
