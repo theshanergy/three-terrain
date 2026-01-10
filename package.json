@@ -1,0 +1,65 @@
+{
+	"name": "three-terrain",
+	"version": "1.0.0",
+	"private": false,
+	"description": "Procedural terrain generation system for Three.js with LOD, biomes, and vegetation",
+	"author": "Shane Vincent",
+	"license": "MIT",
+	"type": "module",
+	"main": "./api/index.js",
+	"exports": {
+		".": "./api/index.js",
+		"./api": "./api/index.js"
+	},
+	"files": [
+		"api",
+		"components",
+		"config",
+		"hooks",
+		"store",
+		"utils",
+		"shaders"
+	],
+	"keywords": [
+		"three.js",
+		"terrain",
+		"procedural",
+		"lod",
+		"quadtree",
+		"biome",
+		"vegetation",
+		"react-three-fiber",
+		"webgl"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/theshanergy/three-terrain"
+	},
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"@react-three/drei": "^10.7.7",
+		"@react-three/fiber": "^9.4.2",
+		"@tailwindcss/vite": "^4.1.17",
+		"classnames": "^2.5.1",
+		"leva": "^0.10.0",
+		"noisejs": "^2.1.0",
+		"react": "^19.2.1",
+		"react-dom": "^19.2.1",
+		"tailwindcss": "^4.1.17",
+		"three": "^0.182.0",
+		"three-stdlib": "^2.36.1",
+		"zustand": "^5.0.9"
+	},
+	"devDependencies": {
+		"@types/react": "^19.2.7",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^5.1.2",
+		"r3f-perf": "^7.2.3",
+		"vite": "^7.2.7",
+		"vite-plugin-glsl": "^1.5.5"
+	}
+}
