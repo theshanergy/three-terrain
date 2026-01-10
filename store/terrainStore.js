@@ -1,17 +1,6 @@
 import { create } from 'zustand'
-import { Color } from 'three'
-
-// Helper to normalize a direction array
-const normalizeDirection = (arr) => {
-	const len = Math.sqrt(arr[0] * arr[0] + arr[1] * arr[1] + arr[2] * arr[2])
-	return len > 0 ? [arr[0] / len, arr[1] / len, arr[2] / len] : [0, 1, 0]
-}
-
-// Helper to convert HSL to RGB array
-const hslToRgb = (h, s, l) => {
-	const color = new Color().setHSL(h, s, l)
-	return [color.r, color.g, color.b]
-}
+import { hslToRgb } from '../utils/colorHelpers'
+import { normalizeDirection } from '../utils/vectorHelpers'
 
 // Pre-compute initial values
 const initialSunDir = normalizeDirection([0.545, 0.365, 0.4])

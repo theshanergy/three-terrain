@@ -1,27 +1,8 @@
 import { useControls, folder } from 'leva'
-import { Color } from 'three'
 import useTerrainStore from '../store/terrainStore'
 import { getBiomePresetList, applyBiomePreset } from '../presets'
-
-// Helper to normalize a direction array
-const normalizeDirection = (arr) => {
-	const len = Math.sqrt(arr[0] * arr[0] + arr[1] * arr[1] + arr[2] * arr[2])
-	return len > 0 ? [arr[0] / len, arr[1] / len, arr[2] / len] : [0, 1, 0]
-}
-
-// Helper to convert RGB array to HSL (returns {h, s, l})
-const rgbToHsl = (rgb) => {
-	const color = new Color(rgb[0], rgb[1], rgb[2])
-	const hsl = {}
-	color.getHSL(hsl)
-	return hsl
-}
-
-// Helper to convert HSL to RGB array
-const hslToRgb = (h, s, l) => {
-	const color = new Color().setHSL(h, s, l)
-	return [color.r, color.g, color.b]
-}
+import { rgbToHsl, hslToRgb } from '../utils/colorHelpers'
+import { normalizeDirection } from '../utils/vectorHelpers'
 
 /**
  * TerrainControls - Leva UI panel for runtime terrain configuration
