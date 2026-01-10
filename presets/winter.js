@@ -3,37 +3,29 @@
  *
  * A cold, snowy winter environment with snow-covered terrain,
  * sparse vegetation, and a crisp blue-white atmosphere.
- * This preset applies configuration to the terrain store.
  */
-
-import { hslToRgb } from '../utils/colorHelpers'
-import { normalizeDirection } from '../utils/vectorHelpers'
 
 export const winterPreset = {
 	name: 'Winter',
 	description: 'Snow-covered terrain with cold, crisp atmosphere',
 
-	/**
-	 * Apply winter preset to terrain store
-	 * @param {Object} store - Zustand store instance
-	 */
-	apply: (store) => {
-		// Set environment (using primitive arrays for performance)
-		store.setSunDirection(normalizeDirection([0.3, 0.25, 0.5]))
-		store.setSunColor(hslToRgb(0.55, 0.3, 0.95))
-		store.setSkyColorZenith(hslToRgb(0.58, 0.4, 0.5))
-		store.setSkyColorHorizon(hslToRgb(0.55, 0.3, 0.92))
+	// Environment
+	sunDirection: [0.3, 0.25, 0.5],
+	sunColor: [0.935, 0.956, 0.965],
+	skyColorZenith: [0.3, 0.508, 0.7],
+	skyColorHorizon: [0.896, 0.9296, 0.944],
 
-		// Set terrain
-		store.setSeed(9012)
-		store.setBaseHeightScale(4.5)
-		store.setContinentScale(0.00007)
-		store.setNoiseScale(0.035)
-		store.setMountainScale(0.0008)
-		store.setMaxMountainHeight(500)
-		store.setSpawnRadius(200)
-		store.setSpawnTransitionRadius(2500)
-		store.setLayers([
+	// Terrain
+	seed: 9012,
+	baseHeightScale: 4.5,
+	continentScale: 0.00007,
+	noiseScale: 0.035,
+	mountainScale: 0.0008,
+	maxMountainHeight: 500,
+	spawnRadius: 200,
+	spawnTransitionRadius: 2500,
+
+	layers: [
 				{
 					name: 'snow',
 					textures: {
@@ -74,23 +66,22 @@ export const winterPreset = {
 						scaleFactor: 5,
 					},
 				},
-			])
+			],
 
-			// Set vegetation (sparse in winter)
-		store.setVegetation([])
-		store.setVegetationEnabled(false)
-		store.setVegetationDensity(0.0)
+	// Vegetation (sparse in winter)
+	vegetation: [],
+	vegetationEnabled: false,
+	vegetationDensity: 0.0,
 
-		// Set water (colder, clearer water)
-		store.setWaterEnabled(true)
-		store.setWaterLevel(0)
-		store.setWaterMaxDepth(50)
-		store.setWaterShorelineDepthThreshold(2.5)
-		store.setWaterShallowDepthThreshold(20.0)
-		store.setWaterMaxVisibleDepth(12.0)
-		store.setWaterEdgeFadeDistance(0.1)
-		store.setWaterColor([0.0, 0.05, 0.15])
-	},
+	// Water (colder, clearer water)
+	waterEnabled: true,
+	waterLevel: 0,
+	waterMaxDepth: 50,
+	waterShorelineDepthThreshold: 2.5,
+	waterShallowDepthThreshold: 20.0,
+	waterMaxVisibleDepth: 12.0,
+	waterEdgeFadeDistance: 0.1,
+	waterColor: [0.0, 0.05, 0.15],
 }
 
 export default winterPreset

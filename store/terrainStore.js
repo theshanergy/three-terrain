@@ -1,12 +1,26 @@
 import { create } from 'zustand'
-import { hslToRgb } from '../utils/colorHelpers'
 import { normalizeDirection } from '../utils/vectorHelpers'
+import desertPreset from '../presets/desert'
+import mountainPreset from '../presets/mountain'
+import winterPreset from '../presets/winter'
 
-// Pre-compute initial values
-const initialSunDir = normalizeDirection([0.545, 0.365, 0.4])
-const initialSunColor = hslToRgb(0.1, 1.0, 0.93)
-const initialSkyZenith = hslToRgb(0.58, 0.57, 0.59)
-const initialSkyHorizon = hslToRgb(0.58, 0.67, 0.85)
+const BIOME_PRESETS = {
+	desert: desertPreset,
+	mountain: mountainPreset,
+	winter: winterPreset,
+}
+
+/**
+ * Get list of available biome presets for UI
+ * @returns {Array} Array of biome preset metadata objects
+ */
+export function getBiomePresetList() {
+	return Object.entries(BIOME_PRESETS).map(([key, preset]) => ({
+		id: key,
+		name: preset.name,
+		description: preset.description,
+	}))
+}
 
 /**
  * Terrain store - manages terrain generation state and configuration
@@ -41,12 +55,12 @@ const useTerrainStore = create((set, get) => ({
 	// Sun configuration - stored as primitive arrays to prevent rerender cascades
 	// sunDirection: [x, y, z] normalized direction vector
 	// sunColor: [r, g, b] RGB values (0-1)
-	sunDirection: initialSunDir,
-	sunColor: initialSunColor,
+	sunDirection: normalizeDirection(desertPreset.sunDirection),
+	sunColor: desertPreset.sunColor,
 
 	// Sky colors - stored as [r, g, b] arrays
-	skyColorZenith: initialSkyZenith,
-	skyColorHorizon: initialSkyHorizon,
+	skyColorZenith: desertPreset.skyColorZenith,
+	skyColorHorizon: desertPreset.skyColorHorizon,
 
 	setSunDirection: (direction) => set({ sunDirection: direction }),
 	setSunColor: (color) => set({ sunColor: color }),
@@ -57,22 +71,22 @@ const useTerrainStore = create((set, get) => ({
 	// TERRAIN CONFIGURATION
 	// ========================================
 	// Deterministic seed for terrain generation
-	seed: 1234,
+	seed: desertPreset.seed,
 
 	// Height Scaling
-	baseHeightScale: 4,
+	baseHeightScale: desertPreset.baseHeightScale,
 
 	// Noise Scales
-	continentScale: 0.00007,
-	noiseScale: 0.04,
-	mountainScale: 0.001,
+	continentScale: desertPreset.continentScale,
+	noiseScale: desertPreset.noiseScale,
+	mountainScale: desertPreset.mountainScale,
 
 	// Height Limits
-	maxMountainHeight: 400,
+	maxMountainHeight: desertPreset.maxMountainHeight,
 
 	// Spawn Area - flat safe zone that transitions to natural terrain
-	spawnRadius: 200,
-	spawnTransitionRadius: 2500,
+	spawnRadius: desertPreset.spawnRadius,
+	spawnTransitionRadius: desertPreset.spawnTransitionRadius,
 
 	// LOD settings
 	lodSplitFactor: 2,
@@ -88,59 +102,7 @@ const useTerrainStore = create((set, get) => ({
 	},
 
 	// Terrain Layers
-	layers: [
-		{
-			name: 'rock',
-			textures: {
-				albedo: '/assets/images/ground/dark_rough_rock_albedo.jpg',
-				normal: '/assets/images/ground/dark_rough_rock_normal.jpg',
-			},
-			textureScale: 0.02,
-			lod: {
-				distance: 400,
-				levels: 3,
-			},
-		},
-		{
-			name: 'sand',
-			textures: {
-				albedo: '/assets/images/ground/sand.jpg',
-				normal: '/assets/images/ground/sand_normal.jpg',
-			},
-			textureScale: 0.4,
-			normalScale: 0.5,
-			height: {
-				min: -1,
-				max: 45,
-				transitionMin: 3,
-				transitionMax: 55,
-				influence: 1.0,
-			},
-			slope: {
-				max: 0.05,
-				influence: 0.9,
-				transition: 0.03,
-			},
-		},
-		{
-			name: 'snow',
-			textures: {
-				albedo: '/assets/images/ground/snow.jpg',
-				normal: '/assets/images/ground/snow_normal.jpg',
-			},
-			textureScale: 0.025,
-			normalScale: 0.5,
-			height: {
-				min: 220,
-				transitionMin: 55.0,
-				influence: 1.0,
-			},
-			lod: {
-				distance: 300,
-				levels: 3,
-			},
-		},
-	],
+	layers: desertPreset.layers,
 
 	setSeed: (seed) => set({ seed }),
 	setBaseHeightScale: (scale) => set({ baseHeightScale: scale }),
@@ -160,29 +122,29 @@ const useTerrainStore = create((set, get) => ({
 	// ========================================
 	// VEGETATION CONFIGURATION
 	// ========================================
-	vegetation: [],
+	vegetation: desertPreset.vegetation,
 	setVegetation: (vegetationUpdater) =>
 		set((state) => ({
 			vegetation: typeof vegetationUpdater === 'function' ? vegetationUpdater(state.vegetation) : vegetationUpdater,
 		})),
 
 	// Vegetation controls
-	vegetationEnabled: true,
-	vegetationDensity: 1.0,
+	vegetationEnabled: desertPreset.vegetationEnabled,
+	vegetationDensity: desertPreset.vegetationDensity,
 	setVegetationEnabled: (enabled) => set({ vegetationEnabled: enabled }),
 	setVegetationDensity: (density) => set({ vegetationDensity: density }),
 
 	// ========================================
 	// WATER CONFIGURATION
 	// ========================================
-	waterEnabled: true,
-	waterLevel: 0,
-	waterMaxDepth: 50,
-	waterShorelineDepthThreshold: 2.5,
-	waterShallowDepthThreshold: 20.0,
-	waterMaxVisibleDepth: 8.0,
-	waterEdgeFadeDistance: 0.1,
-	waterColor: [0.0, 0.12, 0.06],
+	waterEnabled: desertPreset.waterEnabled,
+	waterLevel: desertPreset.waterLevel,
+	waterMaxDepth: desertPreset.waterMaxDepth,
+	waterShorelineDepthThreshold: desertPreset.waterShorelineDepthThreshold,
+	waterShallowDepthThreshold: desertPreset.waterShallowDepthThreshold,
+	waterMaxVisibleDepth: desertPreset.waterMaxVisibleDepth,
+	waterEdgeFadeDistance: desertPreset.waterEdgeFadeDistance,
+	waterColor: desertPreset.waterColor,
 
 	setWaterEnabled: (enabled) => set({ waterEnabled: enabled }),
 	setWaterLevel: (level) => set({ waterLevel: level }),
@@ -192,6 +154,75 @@ const useTerrainStore = create((set, get) => ({
 	setWaterMaxVisibleDepth: (depth) => set({ waterMaxVisibleDepth: depth }),
 	setWaterEdgeFadeDistance: (distance) => set({ waterEdgeFadeDistance: distance }),
 	setWaterColor: (color) => set({ waterColor: color }),
+
+	// ========================================
+	// PRESET APPLICATION
+	// ========================================
+	/**
+	 * Apply a preset configuration to the store
+	 * Presets are pure config objects with properties matching the store state
+	 * @param {Object} preset - Preset configuration object
+	 */
+	applyPreset: (preset) => {
+		const updates = {}
+
+		// Environment
+		if (preset.sunDirection !== undefined) {
+			updates.sunDirection = normalizeDirection(preset.sunDirection)
+		}
+		if (preset.sunColor !== undefined) {
+			updates.sunColor = preset.sunColor
+		}
+		if (preset.skyColorZenith !== undefined) {
+			updates.skyColorZenith = preset.skyColorZenith
+		}
+		if (preset.skyColorHorizon !== undefined) {
+			updates.skyColorHorizon = preset.skyColorHorizon
+		}
+
+		// Terrain
+		if (preset.seed !== undefined) updates.seed = preset.seed
+		if (preset.baseHeightScale !== undefined) updates.baseHeightScale = preset.baseHeightScale
+		if (preset.continentScale !== undefined) updates.continentScale = preset.continentScale
+		if (preset.noiseScale !== undefined) updates.noiseScale = preset.noiseScale
+		if (preset.mountainScale !== undefined) updates.mountainScale = preset.mountainScale
+		if (preset.maxMountainHeight !== undefined) updates.maxMountainHeight = preset.maxMountainHeight
+		if (preset.spawnRadius !== undefined) updates.spawnRadius = preset.spawnRadius
+		if (preset.spawnTransitionRadius !== undefined) updates.spawnTransitionRadius = preset.spawnTransitionRadius
+		if (preset.layers !== undefined) updates.layers = preset.layers
+
+		// Vegetation
+		if (preset.vegetation !== undefined) updates.vegetation = preset.vegetation
+		if (preset.vegetationEnabled !== undefined) updates.vegetationEnabled = preset.vegetationEnabled
+		if (preset.vegetationDensity !== undefined) updates.vegetationDensity = preset.vegetationDensity
+
+		// Water
+		if (preset.waterEnabled !== undefined) updates.waterEnabled = preset.waterEnabled
+		if (preset.waterLevel !== undefined) updates.waterLevel = preset.waterLevel
+		if (preset.waterMaxDepth !== undefined) updates.waterMaxDepth = preset.waterMaxDepth
+		if (preset.waterShorelineDepthThreshold !== undefined) {
+			updates.waterShorelineDepthThreshold = preset.waterShorelineDepthThreshold
+		}
+		if (preset.waterShallowDepthThreshold !== undefined) {
+			updates.waterShallowDepthThreshold = preset.waterShallowDepthThreshold
+		}
+		if (preset.waterMaxVisibleDepth !== undefined) updates.waterMaxVisibleDepth = preset.waterMaxVisibleDepth
+		if (preset.waterEdgeFadeDistance !== undefined) updates.waterEdgeFadeDistance = preset.waterEdgeFadeDistance
+		if (preset.waterColor !== undefined) updates.waterColor = preset.waterColor
+
+		set(updates)
+	},
+
+	/**
+	 * Apply a preset by ID
+	 * @param {string} presetId - The ID of the preset to apply (e.g., 'desert', 'mountain', 'winter')
+	 */
+	applyPresetById: (presetId) => {
+		const preset = BIOME_PRESETS[presetId]
+		if (preset) {
+			get().applyPreset(preset)
+		}
+	},
 }))
 
 export default useTerrainStore

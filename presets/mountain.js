@@ -2,38 +2,31 @@
  * Mountain Biome Preset
  *
  * A cold, rugged environment with high elevations and sparse vegetation.
- * This preset applies configuration to the terrain store.
  */
 
 import { createGrassMesh } from '../utils/vegetation/grassMesh'
-import { hslToRgb } from '../utils/colorHelpers'
-import { normalizeDirection } from '../utils/vectorHelpers'
 
 export const mountainPreset = {
 	name: 'Mountain',
 	description: 'A cold, rugged environment with high elevations and sparse vegetation.',
 
-	/**
-	 * Apply mountain preset to terrain store
-	 * @param {Object} store - Zustand store instance
-	 */
-	apply: (store) => {
-		// Set environment (using primitive arrays for performance)
-		store.setSunDirection(normalizeDirection([0.545, 0.365, 0.4]))
-		store.setSunColor(hslToRgb(0.1, 1.0, 0.93))
-		store.setSkyColorZenith(hslToRgb(0.58, 0.57, 0.59))
-		store.setSkyColorHorizon(hslToRgb(0.58, 0.67, 0.85))
+	// Environment
+	sunDirection: [0.545, 0.365, 0.4],
+	sunColor: [1.0, 0.944, 0.86],
+	skyColorZenith: [0.3563, 0.5993, 0.8237],
+	skyColorHorizon: [0.7495, 0.854, 0.9505],
 
-		// Set terrain
-		store.setSeed(5678)
-		store.setBaseHeightScale(6)
-		store.setContinentScale(0.00007)
-		store.setNoiseScale(0.06)
-		store.setMountainScale(0.001)
-		store.setMaxMountainHeight(600)
-		store.setSpawnRadius(200)
-		store.setSpawnTransitionRadius(2500)
-		store.setLayers([
+	// Terrain
+	seed: 5678,
+	baseHeightScale: 6,
+	continentScale: 0.00007,
+	noiseScale: 0.06,
+	mountainScale: 0.001,
+	maxMountainHeight: 600,
+	spawnRadius: 200,
+	spawnTransitionRadius: 2500,
+
+	layers: [
 				{
 					name: 'rock',
 					textures: {
@@ -88,10 +81,10 @@ export const mountainPreset = {
 						levels: 3,
 					},
 				},
-			])
+			],
 
-			// Set vegetation
-		store.setVegetation([
+	// Vegetation
+	vegetation: [
 			{
 				name: 'grass',
 				meshFactory: () => createGrassMesh({ colorHex: '#3f4722' }),
@@ -259,20 +252,19 @@ export const mountainPreset = {
 				},
 				density: 80,
 			},
-		])
-		store.setVegetationEnabled(true)
-		store.setVegetationDensity(1.0)
+		],
+	vegetationEnabled: true,
+	vegetationDensity: 1.0,
 
-		// Set water
-		store.setWaterEnabled(true)
-		store.setWaterLevel(0)
-		store.setWaterMaxDepth(50)
-		store.setWaterShorelineDepthThreshold(2.5)
-		store.setWaterShallowDepthThreshold(20.0)
-		store.setWaterMaxVisibleDepth(8.0)
-		store.setWaterEdgeFadeDistance(0.1)
-		store.setWaterColor([0.0, 0.12, 0.06])
-	},
+	// Water
+	waterEnabled: true,
+	waterLevel: 0,
+	waterMaxDepth: 50,
+	waterShorelineDepthThreshold: 2.5,
+	waterShallowDepthThreshold: 20.0,
+	waterMaxVisibleDepth: 8.0,
+	waterEdgeFadeDistance: 0.1,
+	waterColor: [0.0, 0.12, 0.06],
 }
 
 export default mountainPreset

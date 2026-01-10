@@ -1,6 +1,6 @@
 import { useControls, folder } from 'leva'
 import useTerrainStore from '../store/terrainStore'
-import { getBiomePresetList, applyBiomePreset } from '../presets'
+import { getBiomePresetList } from '../store/terrainStore'
 import { normalizeDirection } from '../utils/vectorHelpers'
 
 /**
@@ -166,7 +166,7 @@ const TerrainControls = () => {
 		preset: {
 			value: 'desert',
 			options: biomePresetOptions,
-			onChange: (value) => applyBiomePreset(value, useTerrainStore.getState()),
+			onChange: (value) => useTerrainStore.getState().applyPresetById(value),
 		},
 	})
 
