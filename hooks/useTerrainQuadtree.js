@@ -21,7 +21,7 @@ const useTerrainQuadtree = () => {
 	// Update quadtree based on camera position each frame
 	useFrame(({ camera, clock }) => {
 		// Get LOD config from store each frame (inexpensive)
-		const { rootSize, minTileSize, lodSplitFactor, lodHysteresis, tileResolution, maxQuadtreeDepth } = useTerrainStore.getState()
+		const { rootSize, minTileSize, lodSplitFactor, lodHysteresis, tileResolution, maxQuadtreeDepth, viewRange } = useTerrainStore.getState()
 
 		const centerPosition = camera.position
 		const currentTime = clock.getElapsedTime()
@@ -53,13 +53,13 @@ const useTerrainQuadtree = () => {
 
 		// Determine which quadtree roots we need based on player position
 		const rootsNeeded = new Set()
-		const viewRange = 2 // Number of root tiles in each direction from center
 
 		// Calculate the root tile the camera is currently in
 		const centerRootX = Math.floor(centerPosition.x / rootSize)
 		const centerRootZ = Math.floor(centerPosition.z / rootSize)
 
 		// Generate roots in a grid around the camera's current root
+		// viewRange determines how many root tiles to load in each direction
 		for (let rx = -viewRange; rx <= viewRange; rx++) {
 			for (let rz = -viewRange; rz <= viewRange; rz++) {
 				// Calculate root tile coordinates

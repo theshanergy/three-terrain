@@ -44,6 +44,7 @@ const CONTROLS_CONFIG = {
 				minTileSize: { stateKey: 'minTileSize', setter: 'setMinTileSize', min: 8, max: 128, step: 8 },
 				rootSize: { stateKey: 'rootSize', setter: 'setRootSize', min: 1024, max: 8192, step: 256 },
 				tileResolution: { stateKey: 'tileResolution', setter: 'setTileResolution', min: 8, max: 64, step: 1 },
+				viewRange: { stateKey: 'viewRange', setter: 'setViewRange', min: 1, max: 20, step: 1 },
 			},
 		},
 	},

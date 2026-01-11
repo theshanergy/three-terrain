@@ -94,6 +94,7 @@ const useTerrainStore = create((set, get) => ({
 	minTileSize: 32,
 	rootSize: 4096,
 	tileResolution: 16,
+	viewRange: 5,
 
 	// Computed LOD value - maximum quadtree depth (root node LOD level)
 	// LOD 0 is highest resolution (smallest tiles)
@@ -117,6 +118,7 @@ const useTerrainStore = create((set, get) => ({
 	setMinTileSize: (size) => set({ minTileSize: size }),
 	setRootSize: (size) => set({ rootSize: size }),
 	setTileResolution: (resolution) => set({ tileResolution: resolution }),
+	setViewRange: (range) => set({ viewRange: range }),
 	setLayers: (layers) => set({ layers }),
 
 	// ========================================

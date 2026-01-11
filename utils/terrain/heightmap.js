@@ -77,8 +77,10 @@ export function createHeightSampler(config) {
 
 		// Vary shoreline sharpness along the coast using continental noise
 		// This creates organic variation - some areas have sharp cliffs, others gentle slopes
+		// Remap noise (-1 to 1) to safe sharpness range (0.5 to 4.0)
+		// Lower values = gentler slopes, higher values = sharper cliffs
 		const shorelineVariation = noise.perlin2(x * continentScale * 0.4 + 500, z * continentScale * 0.4 + 500)
-		const shorelineSharpness = 1.85 + shorelineVariation * 5.0 // Range (gentler to sharper)
+		const shorelineSharpness = 2.25 + shorelineVariation * 1.75 // Range: 0.5 to 4.0
 		continental = Math.sign(continental) * Math.pow(Math.abs(continental), 1.0 / shorelineSharpness)
 
 		// === LAYER 2: Base terrain variation ===
@@ -134,6 +136,12 @@ export function createHeightSampler(config) {
 			const t = (dist - spawnRadius) / (spawnTransitionRadius - spawnRadius)
 			const blend = t * t * t * (t * (t * 6 - 15) + 10) // Quintic smoothstep
 			height *= blend // Blend from 0 (flat) to full terrain height
+		}
+
+		// Guard against NaN from noise functions at extreme coordinates
+		// (noisejs can return NaN when floating point precision is lost)
+		if (!Number.isFinite(height)) {
+			return 0
 		}
 
 		return height
