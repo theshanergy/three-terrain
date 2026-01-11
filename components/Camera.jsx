@@ -16,7 +16,7 @@ const KEY_MAP = {
 	ShiftRight: 'sprint',
 }
 
-const Camera = ({ speed = 500, sprintMultiplier = 2, enabled = true }) => {
+const Camera = ({ speed = 150, sprintMultiplier = 2, enabled = true }) => {
 	const cameraRef = useRef()
 	const controlsRef = useRef()
 	const velocity = useRef(new Vector3())

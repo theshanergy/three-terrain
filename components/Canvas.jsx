@@ -25,7 +25,7 @@ const ThreeCanvas = () => {
 				<PerfMonitor />
 
 				<TerrainProvider>
-					<Camera speed={50} sprintMultiplier={2} enabled={true} />
+					<Camera />
 
 					<Suspense fallback={null}>
 						<Environment />
