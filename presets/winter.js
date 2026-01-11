@@ -79,7 +79,7 @@ export const winterPreset = {
 	waterShorelineDepthThreshold: 2.5,
 	waterShallowDepthThreshold: 20.0,
 	waterMaxVisibleDepth: 12.0,
-	waterEdgeFadeDistance: 0.1,
+	waterEdgeFadeDistance: 0.25,
 	waterColor: [0.0, 0.05, 0.15],
 }
 
