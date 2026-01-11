@@ -139,7 +139,6 @@ const useTerrainStore = create((set, get) => ({
 	// ========================================
 	// WATER CONFIGURATION
 	// ========================================
-	waterEnabled: desertPreset.waterEnabled,
 	waterLevel: desertPreset.waterLevel,
 	waterMaxDepth: desertPreset.waterMaxDepth,
 	waterShorelineDepthThreshold: desertPreset.waterShorelineDepthThreshold,
@@ -148,7 +147,6 @@ const useTerrainStore = create((set, get) => ({
 	waterEdgeFadeDistance: desertPreset.waterEdgeFadeDistance,
 	waterColor: desertPreset.waterColor,
 
-	setWaterEnabled: (enabled) => set({ waterEnabled: enabled }),
 	setWaterLevel: (level) => set({ waterLevel: level }),
 	setWaterMaxDepth: (depth) => set({ waterMaxDepth: depth }),
 	setWaterShorelineDepthThreshold: (threshold) => set({ waterShorelineDepthThreshold: threshold }),
@@ -191,7 +189,6 @@ const useTerrainStore = create((set, get) => ({
 		if (preset.vegetationDensity !== undefined) updates.vegetationDensity = preset.vegetationDensity
 
 		// Water
-		if (preset.waterEnabled !== undefined) updates.waterEnabled = preset.waterEnabled
 		if (preset.waterLevel !== undefined) updates.waterLevel = preset.waterLevel
 		if (preset.waterMaxDepth !== undefined) updates.waterMaxDepth = preset.waterMaxDepth
 		if (preset.waterShorelineDepthThreshold !== undefined) updates.waterShorelineDepthThreshold = preset.waterShorelineDepthThreshold

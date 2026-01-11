@@ -257,7 +257,6 @@ export const mountainPreset = {
 	vegetationDensity: 1.0,
 
 	// Water
-	waterEnabled: true,
 	waterLevel: 0,
 	waterMaxDepth: 50,
 	waterShorelineDepthThreshold: 2.5,

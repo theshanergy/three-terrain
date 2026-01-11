@@ -74,7 +74,6 @@ export const winterPreset = {
 	vegetationDensity: 0.0,
 
 	// Water (colder, clearer water)
-	waterEnabled: true,
 	waterLevel: 0,
 	waterMaxDepth: 50,
 	waterShorelineDepthThreshold: 2.5,

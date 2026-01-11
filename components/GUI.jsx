@@ -61,7 +61,6 @@ const CONTROLS_CONFIG = {
 		density: { stateKey: 'vegetationDensity', setter: 'setVegetationDensity', min: 0, max: 2, step: 0.1 },
 	},
 	Water: {
-		enabled: { type: 'boolean', stateKey: 'waterEnabled', setter: 'setWaterEnabled' },
 		level: { stateKey: 'waterLevel', setter: 'setWaterLevel', min: -50, max: 50, step: 1 },
 		color: { type: 'color', stateKey: 'waterColor', setter: 'setWaterColor' },
 		depth: {
