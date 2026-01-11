@@ -1,22 +1,26 @@
 import { useMemo, useRef, useEffect } from 'react'
 import { useLoader, useFrame, useThree } from '@react-three/fiber'
-import { TextureLoader, RepeatWrapping, ShaderMaterial, Color, Vector3, Matrix4, Plane, Vector4, PerspectiveCamera, WebGLRenderTarget, FrontSide } from 'three'
+import { TextureLoader, RepeatWrapping, MeshStandardMaterial, Color, Vector3, Matrix4, Plane, Vector4, PerspectiveCamera, WebGLRenderTarget, FrontSide } from 'three'
 
 import useTerrainStore from '../store/terrainStore'
 import { getWaveUniforms } from '../utils/water/wavePhysics'
+import waterCommonVert from '../shaders/water/common.vert.glsl?raw'
+import waterCommonFrag from '../shaders/water/common.frag.glsl?raw'
+import waterBeginVertex from '../shaders/water/begin_vertex.glsl?raw'
+import waterProjectVertex from '../shaders/water/project_vertex.glsl?raw'
+import waterWorldposVertex from '../shaders/water/worldpos_vertex.glsl?raw'
+import waterNormalFragmentMaps from '../shaders/water/normal_fragment_maps.glsl?raw'
+import waterOpaqueFragment from '../shaders/water/opaque_fragment.glsl?raw'
 
 // Deep equality check for waterColor array
 const selectWaterColor = (state) => state.waterColor
 const waterColorEqual = (a, b) => a && b && a[0] === b[0] && a[1] === b[1] && a[2] === b[2]
 
-import waterVertexShader from '../shaders/water.vert.glsl'
-import waterFragmentShader from '../shaders/water.frag.glsl'
-
 /**
  * Custom hook to create and manage water material with reflections.
  * Handles material creation, reflection rendering, and cleanup.
  *
- * @returns {ShaderMaterial} The water material with animated reflections
+ * @returns {MeshStandardMaterial} The water material with animated reflections
  */
 const useWaterMaterial = () => {
 	const { gl, scene, camera } = useThree()
@@ -76,49 +80,53 @@ const useWaterMaterial = () => {
 	const waterMaterial = useMemo(() => {
 		const refs = reflectionRefs.current
 		const waveUniforms = getWaveUniforms()
-
-		return new ShaderMaterial({
-			vertexShader: waterVertexShader,
-			fragmentShader: waterFragmentShader,
-			uniforms: {
-				// Water rendering uniforms
-				normalSampler: { value: waterNormals },
-				mirrorSampler: { value: refs.renderTarget.texture },
-				textureMatrix: { value: refs.textureMatrix },
-				alpha: { value: 1.0 },
-				time: { value: 0 },
-				size: { value: 10.0 },
-				distortionScale: { value: 8.0 },
-				sunColor: { value: new Color() },
-				sunDirection: { value: new Vector3() },
-				eye: { value: new Vector3() },
-				waterColor: { value: new Color(waterColor[0], waterColor[1], waterColor[2]) },
-
-				// Sky colors for reflection fallback
-				skyColor: { value: new Color() },
-				skyHorizonColor: { value: new Color() },
-
-				// Wave uniforms
-				waveA: { value: waveUniforms.waveA },
-				waveB: { value: waveUniforms.waveB },
-				waveC: { value: waveUniforms.waveC },
-				offsetX: { value: 0 },
-				offsetZ: { value: 0 },
-
-				// Depth-based wave modulation
-				shorelineDepthThreshold: { value: shorelineDepthThreshold },
-				shallowDepthThreshold: { value: shallowDepthThreshold },
-
-				// Depth-based visual effects
-				maxVisibleDepth: { value: maxVisibleDepth },
-				edgeFadeDistance: { value: edgeFadeDistance },
-			},
-			lights: false,
-			fog: false,
+		const material = new MeshStandardMaterial({
+			color: new Color(waterColor[0], waterColor[1], waterColor[2]),
+			roughness: 0.15,
+			metalness: 0.05,
 			side: FrontSide,
 			transparent: true,
 			depthWrite: false,
 		})
+
+		material.onBeforeCompile = (shader) => {
+			shader.uniforms.normalSampler = { value: waterNormals }
+			shader.uniforms.mirrorSampler = { value: refs.renderTarget.texture }
+			shader.uniforms.textureMatrix = { value: refs.textureMatrix }
+			shader.uniforms.time = { value: 0 }
+			shader.uniforms.size = { value: 10.0 }
+			shader.uniforms.distortionScale = { value: 8.0 }
+			shader.uniforms.sunColor = { value: new Color() }
+			shader.uniforms.sunDirection = { value: new Vector3() }
+			shader.uniforms.eye = { value: new Vector3() }
+			shader.uniforms.waterColor = { value: new Color(waterColor[0], waterColor[1], waterColor[2]) }
+			shader.uniforms.skyColor = { value: new Color() }
+			shader.uniforms.skyHorizonColor = { value: new Color() }
+			shader.uniforms.waveA = { value: waveUniforms.waveA }
+			shader.uniforms.waveB = { value: waveUniforms.waveB }
+			shader.uniforms.waveC = { value: waveUniforms.waveC }
+			shader.uniforms.shorelineDepthThreshold = { value: shorelineDepthThreshold }
+			shader.uniforms.shallowDepthThreshold = { value: shallowDepthThreshold }
+			shader.uniforms.maxVisibleDepth = { value: maxVisibleDepth }
+			shader.uniforms.edgeFadeDistance = { value: edgeFadeDistance }
+
+			shader.vertexShader = shader.vertexShader
+				.replace('#include <common>', `#include <common>\n${waterCommonVert}`)
+				.replace('#include <begin_vertex>', waterBeginVertex)
+				.replace('#include <project_vertex>', waterProjectVertex)
+				.replace('#include <worldpos_vertex>', waterWorldposVertex)
+
+			shader.fragmentShader = shader.fragmentShader
+				.replace('#include <common>', `#include <common>\n${waterCommonFrag}`)
+				.replace('#include <normal_fragment_maps>', waterNormalFragmentMaps)
+				.replace('#include <opaque_fragment>', waterOpaqueFragment)
+
+			material.userData.shader = shader
+		}
+
+		material.customProgramCacheKey = () => 'water-standard-v1'
+
+		return material
 	}, [waterNormals, waterColor, shorelineDepthThreshold, shallowDepthThreshold, maxVisibleDepth, edgeFadeDistance])
 
 	// Store water material ref for cleanup
@@ -147,23 +155,25 @@ const useWaterMaterial = () => {
 		if (!waterMaterial) return
 
 		const refs = reflectionRefs.current
+		const shader = waterMaterial.userData.shader
+		if (!shader) return
 
 		// Get environment values from store (doesn't trigger rerenders)
 		const { sunDirection, sunColor, skyColorZenith, skyColorHorizon } = useTerrainStore.getState()
 
 		// Update environment uniforms
-		waterMaterial.uniforms.sunDirection.value.set(sunDirection[0], sunDirection[1], sunDirection[2])
-		waterMaterial.uniforms.sunColor.value.setRGB(sunColor[0], sunColor[1], sunColor[2])
-		waterMaterial.uniforms.skyColor.value.setRGB(skyColorZenith[0], skyColorZenith[1], skyColorZenith[2])
-		waterMaterial.uniforms.skyHorizonColor.value.setRGB(skyColorHorizon[0], skyColorHorizon[1], skyColorHorizon[2])
+		shader.uniforms.sunDirection.value.set(sunDirection[0], sunDirection[1], sunDirection[2])
+		shader.uniforms.sunColor.value.setRGB(sunColor[0], sunColor[1], sunColor[2])
+		shader.uniforms.skyColor.value.setRGB(skyColorZenith[0], skyColorZenith[1], skyColorZenith[2])
+		shader.uniforms.skyHorizonColor.value.setRGB(skyColorHorizon[0], skyColorHorizon[1], skyColorHorizon[2])
 
 		// Update time uniform (always needed for wave animation)
-		waterMaterial.uniforms.time.value += delta
+		shader.uniforms.time.value += delta
 
 		// Update eye position
 		const cameraWorldPosition = refs.cameraWorldPosition
 		cameraWorldPosition.setFromMatrixPosition(camera.matrixWorld)
-		waterMaterial.uniforms.eye.value.copy(cameraWorldPosition)
+		shader.uniforms.eye.value.copy(cameraWorldPosition)
 
 		// Skip reflection if camera is very far from water (> 1000 units)
 		const distanceToWater = Math.abs(cameraWorldPosition.y - waterLevel)
@@ -266,7 +276,7 @@ const useWaterMaterial = () => {
 		gl.state.buffers.depth.setMask(true)
 
 		// Set clear color to sky horizon so unrendered areas blend with sky reflection
-		gl.setClearColor(waterMaterial.uniforms.skyHorizonColor.value, 1.0)
+		gl.setClearColor(shader.uniforms.skyHorizonColor.value, 1.0)
 		gl.clear(true, true, false)
 
 		gl.render(scene, mirrorCamera)
