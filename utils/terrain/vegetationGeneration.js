@@ -22,13 +22,13 @@ const _normalScratch = new Vector3()
  *
  * @param {number} cellX - Cell center X (world coordinates)
  * @param {number} cellZ - Cell center Z (world coordinates)
- * @param {Object} terrainHelpers - Height/normal sampling functions
+ * @param {Object} terrain - Terrain query functions from context
  * @param {Object} config - Vegetation type config
  * @param {number} typeIndex - Vegetation type index for seeding
  * @returns {Array} Array of matrices for this cell
  */
-const generateCellVegetation = (cellX, cellZ, terrainHelpers, config, typeIndex, minTileSize) => {
-	const { getWorldHeight, getNormal } = terrainHelpers
+const generateCellVegetation = (cellX, cellZ, terrain, config, typeIndex, minTileSize) => {
+	const { getHeight, getNormal } = terrain
 	const { scale, slope, height, density } = config
 
 	const dummy = _scratchDummy
@@ -81,7 +81,7 @@ const generateCellVegetation = (cellX, cellZ, terrainHelpers, config, typeIndex,
 		const vegZ = minZ + random() * minTileSize
 
 		// Height check
-		const vegY = getWorldHeight(vegX, vegZ)
+		const vegY = getHeight(vegX, vegZ)
 		if (vegY < height.min || vegY > height.max) continue
 
 		// Slope check
@@ -116,16 +116,16 @@ const generateCellVegetation = (cellX, cellZ, terrainHelpers, config, typeIndex,
  * stable regardless of tile LOD.
  *
  * @param {Object} node - Quadtree node (tile) with centerX, centerZ, size
- * @param {Object} terrainHelpers - Terrain height/normal sampling functions
+ * @param {Object} terrain - Terrain query functions from context
  * @param {number} lodLevel - LOD level (unused, kept for API compatibility)
  * @param {Object} vegetationTypeConfig - Configuration for this vegetation type
  * @param {number} typeIndex - Index of this vegetation type (used for seeding)
  * @returns {Array} Array of vegetation matrices
  */
-export const generateVegetationForType = (node, terrainHelpers, lodLevel, vegetationTypeConfig, typeIndex) => {
+export const generateVegetationForType = (node, terrain, lodLevel, vegetationTypeConfig, typeIndex) => {
 	const { centerX, centerZ, size } = node
 	const matrices = []
-	
+
 	// Get minTileSize from store
 	const { minTileSize } = useTerrainStore.getState()
 
@@ -145,7 +145,7 @@ export const generateVegetationForType = (node, terrainHelpers, lodLevel, vegeta
 			const cellZ = minZ + (cz + 0.5) * minTileSize
 
 			// Generate vegetation for this cell and add to matrices
-			const cellMatrices = generateCellVegetation(cellX, cellZ, terrainHelpers, vegetationTypeConfig, typeIndex, minTileSize)
+			const cellMatrices = generateCellVegetation(cellX, cellZ, terrain, vegetationTypeConfig, typeIndex, minTileSize)
 
 			// Concat arrays more efficiently than spread operator
 			for (let i = 0; i < cellMatrices.length; i++) {

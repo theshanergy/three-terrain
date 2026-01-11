@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 
 import useTerrainStore from '../store/terrainStore'
+import { TerrainProvider } from '../context/TerrainContext'
 import Environment from './Environment'
 import Camera from './Camera'
 import Loader from './Loader'
@@ -27,12 +28,14 @@ const ThreeCanvas = () => {
 			<Canvas shadows={{ enabled: !performanceDegraded }} dpr={performanceDegraded ? 1 : [1, 1.5]} camera={cameraConfig} className='pointer-events-auto'>
 				<PerformanceMonitor onDecline={() => setPerformanceDegraded(true)} />
 				<PerfMonitor />
-				
-				<Camera speed={50} sprintMultiplier={2} enabled={true} />
 
-				<Suspense fallback={null}>
-					<Environment />
-				</Suspense>
+				<TerrainProvider>
+					<Camera speed={50} sprintMultiplier={2} enabled={true} />
+
+					<Suspense fallback={null}>
+						<Environment />
+					</Suspense>
+				</TerrainProvider>
 			</Canvas>
 		</div>
 	)

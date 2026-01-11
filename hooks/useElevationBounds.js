@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { getTerrainHelpers } from '../utils/terrain/heightSampler'
+import { useTerrainContext } from '../context/TerrainContext'
 
 /**
  * Custom hook for elevation constraints using direct terrain height sampling.
@@ -14,13 +14,16 @@ import { getTerrainHelpers } from '../utils/terrain/heightSampler'
  * @returns {Function} Function to check and enforce elevation bounds
  */
 const useElevationBounds = (positionRef, minHeightAboveTerrain, maxHeightAboveTerrain = null, targetRef = null, velocityRef = null) => {
+	// Get terrain context - use the ref for non-reactive access in callbacks
+	const { ref: terrainRef } = useTerrainContext()
+
 	const checkElevationBounds = useCallback(() => {
-		const terrainHelpers = getTerrainHelpers()
+		// Use ref.current to get latest terrain without causing re-renders
+		const terrain = terrainRef.current
 
 		// Use direct terrain height sampling if available (much faster than raycasting)
-		if (terrainHelpers) {
-			const getTerrainHeight = terrainHelpers.getWorldHeight
-			const terrainHeight = getTerrainHeight(positionRef.current.x, positionRef.current.z)
+		if (terrain) {
+			const terrainHeight = terrain.getHeight(positionRef.current.x, positionRef.current.z)
 
 			// Lower bound (ground avoidance)
 			const minAllowedHeight = terrainHeight + minHeightAboveTerrain
@@ -48,7 +51,7 @@ const useElevationBounds = (positionRef, minHeightAboveTerrain, maxHeightAboveTe
 			if (targetRef) {
 				const midX = (positionRef.current.x + targetRef.current.x) / 2
 				const midZ = (positionRef.current.z + targetRef.current.z) / 2
-				const midTerrainHeight = getTerrainHeight(midX, midZ)
+				const midTerrainHeight = terrain.getHeight(midX, midZ)
 				const midRequiredHeight = midTerrainHeight + minHeightAboveTerrain
 
 				// If the interpolated midpoint would be below ground, raise the position
@@ -66,7 +69,7 @@ const useElevationBounds = (positionRef, minHeightAboveTerrain, maxHeightAboveTe
 				positionRef.current.y = minAbsoluteHeight
 			}
 		}
-	}, [minHeightAboveTerrain, maxHeightAboveTerrain, targetRef, velocityRef])
+	}, [terrainRef, minHeightAboveTerrain, maxHeightAboveTerrain, targetRef, velocityRef])
 
 	return checkElevationBounds
 }

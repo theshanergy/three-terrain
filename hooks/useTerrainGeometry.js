@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { BufferGeometry, BufferAttribute } from 'three'
+
 import useTerrainStore from '../store/terrainStore'
-import { getTerrainHelpers } from '../utils/terrain/heightSampler'
+import { useTerrainContext } from '../context/TerrainContext'
 
 /**
  * Create geometry for a quadtree terrain tile.
@@ -15,11 +16,10 @@ import { getTerrainHelpers } from '../utils/terrain/heightSampler'
 const useTerrainGeometry = (node, edgeStitchInfo) => {
 	const tileResolution = useTerrainStore((state) => state.tileResolution)
 	const waterLevel = useTerrainStore((state) => state.waterLevel)
-	
+	const terrain = useTerrainContext()
+
 	return useMemo(() => {
-		const terrainHelpers = getTerrainHelpers()
-		
-		const { baseHeightScale } = terrainHelpers
+		const { sampleHeight, baseHeightScale } = terrain
 		const { size, centerX, centerZ } = node
 		const resolution = tileResolution
 		const segments = resolution
@@ -68,8 +68,8 @@ const useTerrainGeometry = (node, edgeStitchInfo) => {
 				const x1 = x0 + neighborStep
 				const t = (worldX - x0) / neighborStep
 
-				const h0 = terrainHelpers.getNormalizedHeight(x0, worldZ)
-				const h1 = terrainHelpers.getNormalizedHeight(x1, worldZ)
+				const h0 = sampleHeight(x0, worldZ)
+				const h1 = sampleHeight(x1, worldZ)
 				return (h0 * (1 - t) + h1 * t) * baseHeightScale
 			} else {
 				const gridZ = worldZ / neighborStep
@@ -77,8 +77,8 @@ const useTerrainGeometry = (node, edgeStitchInfo) => {
 				const z1 = z0 + neighborStep
 				const t = (worldZ - z0) / neighborStep
 
-				const h0 = terrainHelpers.getNormalizedHeight(worldX, z0)
-				const h1 = terrainHelpers.getNormalizedHeight(worldX, z1)
+				const h0 = sampleHeight(worldX, z0)
+				const h1 = sampleHeight(worldX, z1)
 				return (h0 * (1 - t) + h1 * t) * baseHeightScale
 			}
 		}
@@ -136,7 +136,7 @@ const useTerrainGeometry = (node, edgeStitchInfo) => {
 					}
 				} else {
 					// No stitching needed - sample directly
-					const normalizedHeight = terrainHelpers.getNormalizedHeight(worldX, worldZ)
+					const normalizedHeight = sampleHeight(worldX, worldZ)
 					heightCache[vertIndex] = normalizedHeight
 					height = normalizedHeight * baseHeightScale
 				}
@@ -195,13 +195,13 @@ const useTerrainGeometry = (node, edgeStitchInfo) => {
 				// normals match between adjacent tiles. Interior uses cached heights.
 				if (onWestEdge) {
 					// Sample one step outside tile boundary to the west
-					hL = terrainHelpers.getNormalizedHeight(worldX - step, worldZ) * baseHeightScale
+					hL = sampleHeight(worldX - step, worldZ) * baseHeightScale
 					hR = heightCache[rowOffset + 1] * baseHeightScale
 					dx = 2 * step
 				} else if (onEastEdge) {
 					// Sample one step outside tile boundary to the east
 					hL = heightCache[rowOffset + segments - 1] * baseHeightScale
-					hR = terrainHelpers.getNormalizedHeight(worldX + step, worldZ) * baseHeightScale
+					hR = sampleHeight(worldX + step, worldZ) * baseHeightScale
 					dx = 2 * step
 				} else {
 					// Interior vertex - use cached heights
@@ -212,13 +212,13 @@ const useTerrainGeometry = (node, edgeStitchInfo) => {
 
 				if (onSouthEdge) {
 					// Sample one step outside tile boundary to the south
-					hD = terrainHelpers.getNormalizedHeight(worldX, worldZ - step) * baseHeightScale
+					hD = sampleHeight(worldX, worldZ - step) * baseHeightScale
 					hU = heightCache[sampleCount + i] * baseHeightScale
 					dz = 2 * step
 				} else if (onNorthEdge) {
 					// Sample one step outside tile boundary to the north
 					hD = heightCache[(segments - 1) * sampleCount + i] * baseHeightScale
-					hU = terrainHelpers.getNormalizedHeight(worldX, worldZ + step) * baseHeightScale
+					hU = sampleHeight(worldX, worldZ + step) * baseHeightScale
 					dz = 2 * step
 				} else {
 					// Interior vertex - use cached heights
@@ -286,7 +286,6 @@ const useTerrainGeometry = (node, edgeStitchInfo) => {
 			// Both positions AND UVs need to match for seamless rendering
 			for (let i = 0; i < totalSamples; i++) {
 				const posIndex = i * 3
-				const uvIndex = i * 2
 
 				// Water position - use snapped UV coords (world space) converted to local
 				// This ensures edge vertices have identical positions as coarse neighbor
@@ -343,7 +342,7 @@ const useTerrainGeometry = (node, edgeStitchInfo) => {
 		}
 
 		return { terrainGeometry: terrainGeom, waterGeometry: waterGeom }
-	}, [node, edgeStitchInfo, tileResolution])
+	}, [node, edgeStitchInfo, tileResolution, terrain, waterLevel])
 }
 
 export default useTerrainGeometry

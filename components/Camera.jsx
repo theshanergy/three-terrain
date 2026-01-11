@@ -2,7 +2,8 @@ import { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
 import { Vector3 } from 'three'
-import { getTerrainHelpers } from '../utils/terrain/heightSampler'
+
+import { useTerrainContext } from '../context/TerrainContext'
 
 const KEY_MAP = {
 	KeyW: 'forward',
@@ -28,6 +29,9 @@ const Camera = ({ speed = 500, sprintMultiplier = 2, enabled = true }) => {
 		down: false,
 		sprint: false,
 	})
+
+	// Get terrain context - use the ref for non-reactive access in useFrame
+	const { ref: terrainRef } = useTerrainContext()
 
 	// Handle keyboard input
 	useEffect(() => {
@@ -104,10 +108,10 @@ const Camera = ({ speed = 500, sprintMultiplier = 2, enabled = true }) => {
 		}
 
 		// Apply elevation bounds to prevent clipping under terrain or flying too high
-		const terrainHelpers = getTerrainHelpers()
-		if (terrainHelpers) {
-			const getTerrainHeight = terrainHelpers.getWorldHeight
-			const terrainHeight = getTerrainHeight(camera.position.x, camera.position.z)
+		// Use ref.current to get latest terrain without causing re-renders
+		const terrain = terrainRef.current
+		if (terrain) {
+			const terrainHeight = terrain.getHeight(camera.position.x, camera.position.z)
 
 			// Keep camera at least 2 units above terrain
 			const minHeight = terrainHeight + 2.0

@@ -3,8 +3,8 @@ import { InstancedMesh, Matrix4 } from 'three'
 
 import useTerrainStore from '../store/terrainStore'
 import useVegetation from '../hooks/useVegetation'
+import { useTerrainContext } from '../context/TerrainContext'
 import { generateVegetationForType } from '../utils/terrain/vegetationGeneration'
-import { getTerrainHelpers } from '../utils/terrain/heightSampler'
 
 /**
  * Custom comparison for Vegetation props.
@@ -34,13 +34,13 @@ const Vegetation = memo(({ node }) => {
 	// Get data from store and hooks
 	const performanceDegraded = useTerrainStore((state) => state.performanceDegraded)
 	const vegetationModels = useVegetation()
+	const terrain = useTerrainContext()
 	const showVegetation = !performanceDegraded
 
 	// Generate vegetation instances for this tile
 	const vegetationInstances = useMemo(() => {
 		if (!vegetationModels || !showVegetation) return null
 
-		const terrainHelpers = getTerrainHelpers()
 		const allInstances = []
 
 		// Reusable scratch object for transform composition
@@ -75,7 +75,7 @@ const Vegetation = memo(({ node }) => {
 			}
 
 			// Generate vegetation matrices for this type
-			const vegetationMatrices = generateVegetationForType(node, terrainHelpers, actualLod, vegetationType.config, typeIndex)
+			const vegetationMatrices = generateVegetationForType(node, terrain, actualLod, vegetationType.config, typeIndex)
 
 			if (vegetationMatrices.length === 0) {
 				return
@@ -103,7 +103,7 @@ const Vegetation = memo(({ node }) => {
 		})
 
 		return allInstances.length > 0 ? allInstances : null
-	}, [node.key, node.size, node.lod, vegetationModels, showVegetation])
+	}, [node.key, node.size, node.lod, vegetationModels, showVegetation, terrain])
 
 	// Cleanup vegetation instances
 	useEffect(() => {
@@ -117,11 +117,7 @@ const Vegetation = memo(({ node }) => {
 	}, [vegetationInstances])
 
 	// Vegetation is positioned in world space, not relative to tile
-	return (
-		<>
-			{vegetationInstances && vegetationInstances.map(({ mesh, key }, index) => <primitive key={`vegetation-${node.key}-${key}-${index}`} object={mesh} />)}
-		</>
-	)
+	return <>{vegetationInstances && vegetationInstances.map(({ mesh, key }, index) => <primitive key={`vegetation-${node.key}-${key}-${index}`} object={mesh} />)}</>
 }, arePropsEqual)
 
 export default Vegetation

@@ -1,55 +1,52 @@
-// Unified terrain height sampler
-// Single coherent noise function produces all terrain features:
-// continents, mountains, valleys - without separate "feature" systems
-// Water is simply wherever terrain height < water level (no special casing)
+// Core heightmap generation
+// Creates a height sampling function from terrain configuration
 
-import { Vector3 } from 'three'
-import { Noise } from 'noisejs'
-import useTerrainStore from '../../store/terrainStore'
-
-// Epsilon for numerical gradient approximation
-const GRADIENT_EPSILON = 0.01
-
-// Singleton instance
-let terrainHelpersInstance = null
+import { createSeededNoise } from './noise'
 
 /**
- * Creates terrain helper functions for height and normal sampling.
- * Uses a unified noise approach - one coherent function produces all terrain features.
- * This is now a singleton - only one instance exists and is reused.
- *
- * @returns {Object} Object with getNormalizedHeight, getWorldHeight, getNormal, and isWater functions
+ * Smoothstep interpolation (cubic hermite)
  */
-const createTerrainHelpers = () => {
-	const state = useTerrainStore.getState()
-	const { seed, baseHeightScale, noiseScale, continentScale, mountainScale, maxMountainHeight, spawnRadius, spawnTransitionRadius, waterMaxDepth, waterLevel } = state
+const smoothstep = (t) => {
+	const c = Math.max(0, Math.min(1, t))
+	return c * c * (3 - 2 * c)
+}
 
-	// Create noise instance with seed from store
-	const noise = new Noise(seed)
+/**
+ * Create a height sampling function from terrain configuration.
+ *
+ * The returned function samples normalized height (-1 to +1 range) at any world position.
+ * Uses a unified noise approach - one coherent function produces all terrain features:
+ * continents, mountains, valleys - without separate "feature" systems.
+ *
+ * @param {Object} config - Terrain configuration
+ * @param {number} config.seed - Random seed for noise generation
+ * @param {number} config.baseHeightScale - Scale multiplier for world heights
+ * @param {number} config.continentScale - Scale for continental landmass noise
+ * @param {number} config.noiseScale - Scale for base terrain variation
+ * @param {number} config.mountainScale - Scale for mountain ridge noise
+ * @param {number} config.maxMountainHeight - Maximum mountain height in world units
+ * @param {number} config.spawnRadius - Radius of flat spawn area
+ * @param {number} config.spawnTransitionRadius - Outer radius of spawn transition zone
+ * @param {number} config.waterLevel - Water surface level in world units
+ * @param {number} config.waterMaxDepth - Maximum water depth in world units
+ * @returns {Function} Height sampling function: (x, z) => normalizedHeight
+ */
+export function createHeightSampler(config) {
+	const { seed, baseHeightScale, continentScale, noiseScale, mountainScale, maxMountainHeight, spawnRadius, spawnTransitionRadius, waterLevel, waterMaxDepth } = config
+
+	const noise = createSeededNoise(seed)
 
 	const spawnRadiusSq = spawnRadius * spawnRadius
 	const transitionEndSq = spawnTransitionRadius * spawnTransitionRadius
 
 	/**
-	 * Smoothstep interpolation (cubic hermite)
-	 */
-	const smoothstep = (t) => {
-		const c = Math.max(0, Math.min(1, t))
-		return c * c * (3 - 2 * c)
-	}
-
-	/**
-	 * Get unified terrain height at any world position.
-	 *
-	 * Single continuous function - no land/water branching.
-	 * Water is simply wherever terrain height < water level.
-	 * This eliminates shoreline artifacts from discontinuous functions.
+	 * Sample normalized height at a world position.
 	 *
 	 * @param {number} x - World X coordinate
 	 * @param {number} z - World Z coordinate
-	 * @returns {number} Normalized height value
+	 * @returns {number} Normalized height value (roughly -1 to +1, can exceed for mountains)
 	 */
-	const getNormalizedHeight = (x, z) => {
+	return function sampleHeight(x, z) {
 		const distSq = x * x + z * z
 
 		// === SPAWN AREA: Flat spawn zone (check first for early return) ===
@@ -141,65 +138,4 @@ const createTerrainHelpers = () => {
 
 		return height
 	}
-
-	/**
-	 * Get terrain height in world units.
-	 */
-	const getWorldHeight = (x, z) => {
-		return getNormalizedHeight(x, z) * baseHeightScale
-	}
-
-	/**
-	 * Get terrain normal using numerical gradient.
-	 */
-	const getNormal = (x, z, target = new Vector3()) => {
-		const dist = Math.sqrt(x * x + z * z)
-		const epsilon = dist > 500 ? GRADIENT_EPSILON * 4 : GRADIENT_EPSILON
-
-		const hL = getWorldHeight(x - epsilon, z)
-		const hR = getWorldHeight(x + epsilon, z)
-		const hD = getWorldHeight(x, z - epsilon)
-		const hU = getWorldHeight(x, z + epsilon)
-
-		const dhdx = (hR - hL) / (2 * epsilon)
-		const dhdz = (hU - hD) / (2 * epsilon)
-
-		return target.set(-dhdx, 1, -dhdz).normalize()
-	}
-
-	/**
-	 * Check if a position is in water (terrain below water level).
-	 */
-	const isWater = (x, z) => {
-		return getWorldHeight(x, z) < waterLevel
-	}
-
-	return {
-		getNormalizedHeight,
-		getWorldHeight,
-		getNormal,
-		isWater,
-		baseHeightScale,
-	}
-}
-
-/**
- * Get the singleton terrain helpers instance.
- * Creates it on first call, then returns the cached instance.
- *
- * @returns {Object} Terrain helpers with getNormalizedHeight, getWorldHeight, getNormal, isWater functions
- */
-export const getTerrainHelpers = () => {
-	if (!terrainHelpersInstance) {
-		terrainHelpersInstance = createTerrainHelpers()
-	}
-	return terrainHelpersInstance
-}
-
-/**
- * Reset the singleton instance (useful when terrain config changes).
- * Should be called from Terrain component when it remounts or config changes.
- */
-export const resetTerrainHelpers = () => {
-	terrainHelpersInstance = null
 }
