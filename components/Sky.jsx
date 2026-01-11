@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
 import { BackSide, Vector3, Color } from 'three'
@@ -13,6 +13,14 @@ import skyFragmentShader from '../shaders/sky.frag.glsl'
 const AtmosphericSky = () => {
 	const meshRef = useRef()
 	const materialRef = useRef()
+	const fogRef = useRef()
+
+	const sunDirection = useTerrainStore((state) => state.sunDirection)
+	const sunColor = useTerrainStore((state) => state.sunColor)
+	const skyColorZenith = useTerrainStore((state) => state.skyColorZenith)
+	const skyColorHorizon = useTerrainStore((state) => state.skyColorHorizon)
+	const viewRange = useTerrainStore((state) => state.viewRange)
+	const rootSize = useTerrainStore((state) => state.rootSize)
 
 	// Create stable uniforms object once - values updated in useFrame
 	const uniforms = useMemo(
@@ -33,15 +41,21 @@ const AtmosphericSky = () => {
 		return [500, 8, 8]
 	}, [])
 
+	// Update fog parameters when dependencies change
+	useEffect(() => {
+		if (!fogRef.current) return
+		const fogDistance = viewRange * rootSize
+		fogRef.current.color.setRGB(skyColorHorizon[0], skyColorHorizon[1], skyColorHorizon[2])
+		fogRef.current.near = fogDistance * 0.5
+		fogRef.current.far = fogDistance
+	}, [skyColorHorizon, viewRange, rootSize])
+
 	useFrame((state) => {
 		const mesh = meshRef.current
 		if (!mesh) return
 
 		// Update sky position to match camera position
 		mesh.position.copy(state.camera.position)
-
-		// Get current values from store (doesn't trigger rerenders)
-		const { sunDirection, sunColor, skyColorZenith, skyColorHorizon } = useTerrainStore.getState()
 
 		// Update uniforms with current values
 		if (materialRef.current) {
@@ -58,7 +72,9 @@ const AtmosphericSky = () => {
 	})
 
 	return (
-		<group>
+		<>
+			<fog ref={fogRef} attach='fog' />
+
 			<Environment files='assets/images/envmap/rustig_koppie_puresky_1k.hdr' environmentIntensity={0.3} />
 
 			<ambientLight ref={(light) => light && (light.color = ambientColor)} intensity={2.0} />
@@ -67,7 +83,7 @@ const AtmosphericSky = () => {
 				<sphereGeometry args={geometry} />
 				<shaderMaterial ref={materialRef} uniforms={uniforms} vertexShader={skyVertexShader} fragmentShader={skyFragmentShader} side={BackSide} depthWrite={false} />
 			</mesh>
-		</group>
+		</>
 	)
 }
 
