@@ -22,7 +22,7 @@ const useTerrainQuadtree = () => {
 	useFrame(({ camera, clock }) => {
 		// Get LOD config from store each frame (inexpensive)
 		const { rootSize, minTileSize, lodSplitFactor, lodHysteresis, tileResolution, maxQuadtreeDepth } = useTerrainStore.getState()
-		
+
 		const centerPosition = camera.position
 		const currentTime = clock.getElapsedTime()
 
@@ -70,19 +70,12 @@ const useTerrainQuadtree = () => {
 				const rootX = rootTileX * rootSize + rootSize / 2
 				const rootZ = rootTileZ * rootSize + rootSize / 2
 
-				// Check if this root is within reasonable view distance
-				const distX = centerPosition.x - rootX
-				const distZ = centerPosition.z - rootZ
-				const distSq = distX * distX + distZ * distZ
-
-				if (distSq < rootSize * rootSize * 4) {
-					const rootKey = `${rootX},${rootZ}`
+				const rootKey = `${rootX},${rootZ}`
 				rootsNeeded.add(rootKey)
 
 				// Create root if it doesn't exist
 				if (!quadtreeRoots.current.has(rootKey)) {
 					quadtreeRoots.current.set(rootKey, new QuadtreeNode(rootX, rootZ, rootSize, maxQuadtreeDepth))
-				}
 				}
 			}
 		}
