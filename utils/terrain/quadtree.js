@@ -5,11 +5,11 @@
 import useTerrainStore from '../../store/terrainStore'
 
 /**
-	 * Represents a node in the terrain quadtree.
-	 * Each node covers a square region and can either:
-	 * - Render itself as a single tile (leaf)
-	 * - Subdivide into 4 child nodes (NW, NE, SW, SE)
-	 */
+ * Represents a node in the terrain quadtree.
+ * Each node covers a square region and can either:
+ * - Render itself as a single tile (leaf)
+ * - Subdivide into 4 child nodes (NW, NE, SW, SE)
+ */
 export class QuadtreeNode {
 	/**
 	 * @param {number} centerX - World X position of node center
@@ -26,18 +26,28 @@ export class QuadtreeNode {
 
 		// Unique key for React reconciliation
 		this.key = `qt_${lod}_${Math.floor(centerX)}_${Math.floor(centerZ)}`
-	}	/**
+	}
+
+	/**
+	 * Calculate squared distance from viewer to this node's center.
+	 * Uses squared distance for performance (avoids sqrt).
+	 */
+	getDistanceSq(viewerPos) {
+		const dx = viewerPos.x - this.centerX
+		const dy = viewerPos.y // Height above terrain
+		const dz = viewerPos.z - this.centerZ
+		return dx * dx + dy * dy + dz * dz
+	}
+
+	/**
 	 * Check if this node should subdivide based on distance to viewer.
 	 * Uses squared distance for performance.
 	 */
-	shouldSubdivide(viewerX, viewerZ, splitFactor, minSize) {
+	shouldSubdivide(viewerPos, splitFactor, minSize) {
 		// Don't subdivide if we're at minimum size
 		if (this.size <= minSize) return false
 
-		// Calculate distance from viewer to node center
-		const dx = viewerX - this.centerX
-		const dz = viewerZ - this.centerZ
-		const distSq = dx * dx + dz * dz
+		const distSq = this.getDistanceSq(viewerPos)
 
 		// Split threshold based on node size
 		const splitDist = this.size * splitFactor
@@ -50,10 +60,8 @@ export class QuadtreeNode {
 	 * Check if this node should merge (stop subdividing).
 	 * Uses hysteresis to prevent popping at boundaries.
 	 */
-	shouldMerge(viewerX, viewerZ, splitFactor, hysteresis) {
-		const dx = viewerX - this.centerX
-		const dz = viewerZ - this.centerZ
-		const distSq = dx * dx + dz * dz
+	shouldMerge(viewerPos, splitFactor, hysteresis) {
+		const distSq = this.getDistanceSq(viewerPos)
 
 		// Merge threshold is further than split threshold
 		const mergeDist = this.size * splitFactor * hysteresis
@@ -93,24 +101,24 @@ export class QuadtreeNode {
 	 * Update the quadtree based on viewer position.
 	 * Recursively subdivides or merges nodes as needed.
 	 */
-	update(viewerX, viewerZ, splitFactor, hysteresis, minSize) {
+	update(viewerPos, splitFactor, hysteresis, minSize) {
 		if (this.children) {
 			// Already subdivided - check if we should merge
-			if (this.shouldMerge(viewerX, viewerZ, splitFactor, hysteresis)) {
+			if (this.shouldMerge(viewerPos, splitFactor, hysteresis)) {
 				this.merge()
 			} else {
 				// Update children recursively
 				for (const child of this.children) {
-					child.update(viewerX, viewerZ, splitFactor, hysteresis, minSize)
+					child.update(viewerPos, splitFactor, hysteresis, minSize)
 				}
 			}
 		} else {
 			// Leaf node - check if we should subdivide
-			if (this.shouldSubdivide(viewerX, viewerZ, splitFactor, minSize)) {
+			if (this.shouldSubdivide(viewerPos, splitFactor, minSize)) {
 				this.subdivide()
 				// Immediately update new children
 				for (const child of this.children) {
-					child.update(viewerX, viewerZ, splitFactor, hysteresis, minSize)
+					child.update(viewerPos, splitFactor, hysteresis, minSize)
 				}
 			}
 		}

@@ -96,7 +96,7 @@ const useTerrainQuadtree = () => {
 
 		// Update all active quadtrees
 		for (const [, root] of quadtreeRoots.current) {
-			root.update(centerPosition.x, centerPosition.z, lodSplitFactor, lodHysteresis, minTileSize)
+			root.update(centerPosition, lodSplitFactor, lodHysteresis, minTileSize)
 		}
 
 		// Collect all leaf nodes from all roots
