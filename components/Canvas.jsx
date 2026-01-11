@@ -1,4 +1,4 @@
-import { Suspense, useMemo } from 'react'
+import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 
@@ -16,16 +16,11 @@ const ThreeCanvas = () => {
 	const performanceDegraded = useTerrainStore((state) => state.performanceDegraded)
 	const setPerformanceDegraded = useTerrainStore((state) => state.setPerformanceDegraded)
 
-	// Set default camera position
-	const cameraConfig = useMemo(() => {
-		return { position: [0, 50, 150], fov: 60, near: 0.1, far: 10000 }
-	}, [])
-
 	return (
 		<div id='canvas' className='absolute inset-0 overflow-hidden pointer-events-none'>
 			<Loader />
 
-			<Canvas shadows={{ enabled: !performanceDegraded }} dpr={performanceDegraded ? 1 : [1, 1.5]} camera={cameraConfig} className='pointer-events-auto'>
+			<Canvas shadows={{ enabled: !performanceDegraded }} dpr={performanceDegraded ? 1 : [1, 1.5]} className='pointer-events-auto'>
 				<PerformanceMonitor onDecline={() => setPerformanceDegraded(true)} />
 				<PerfMonitor />
 

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { PointerLockControls } from '@react-three/drei'
+import { PointerLockControls, PerspectiveCamera } from '@react-three/drei'
 import { Vector3 } from 'three'
 
 import { useTerrainContext } from '../context/TerrainContext'
@@ -17,6 +17,7 @@ const KEY_MAP = {
 }
 
 const Camera = ({ speed = 500, sprintMultiplier = 2, enabled = true }) => {
+	const cameraRef = useRef()
 	const controlsRef = useRef()
 	const velocity = useRef(new Vector3())
 	const direction = useRef(new Vector3())
@@ -159,7 +160,12 @@ const Camera = ({ speed = 500, sprintMultiplier = 2, enabled = true }) => {
 
 	if (!enabled) return null
 
-	return <PointerLockControls ref={controlsRef} selector='#canvas canvas' />
+	return (
+		<>
+			<PerspectiveCamera ref={cameraRef} makeDefault position={[0, 150, 0]} fov={60} near={0.1} far={50000} />
+			<PointerLockControls ref={controlsRef} camera={cameraRef.current} selector='#canvas canvas' />
+		</>
+	)
 }
 
 export default Camera
